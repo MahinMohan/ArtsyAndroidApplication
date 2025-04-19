@@ -28,8 +28,6 @@ fun LoginScreen(
     onRegister: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
-
-    // reuse same blue as HomeScreen
     val topBarBlue = Color(0xFFbfcdf2)
 
     var email by remember { mutableStateOf("") }
@@ -52,9 +50,7 @@ fun LoginScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = smallTopAppBarColors(
-                    containerColor = topBarBlue
-                )
+                colors = smallTopAppBarColors(containerColor = topBarBlue)
             )
         }
     ) { innerPadding ->
@@ -78,22 +74,19 @@ fun LoginScreen(
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
+                    .onFocusChanged { fs ->
+                        if (fs.isFocused) {
                             if (!emailTouched) emailTouched = true
                         } else if (emailTouched) {
                             emailError = when {
-                                email.isBlank() ->
-                                    "Email cannot be empty"
+                                email.isBlank() -> "Email cannot be empty"
                                 !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
                                     "Invalid email address"
                                 else -> null
                             }
                         }
                     },
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    imeAction = ImeAction.Next
-                ),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
                     onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
                 )
@@ -124,20 +117,16 @@ fun LoginScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
+                    .onFocusChanged { fs ->
+                        if (fs.isFocused) {
                             if (!passwordTouched) passwordTouched = true
                         } else if (passwordTouched) {
                             passwordError = if (password.isBlank()) {
                                 "Password cannot be empty"
-                            } else {
-                                null
-                            }
+                            } else null
                         }
                     },
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    imeAction = ImeAction.Done
-                ),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = { focusManager.clearFocus() }
                 )

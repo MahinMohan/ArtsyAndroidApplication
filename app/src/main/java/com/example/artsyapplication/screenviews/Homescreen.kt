@@ -22,35 +22,22 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    onLogin: () -> Unit,
     onArtistSelected: (artistId: String, artistName: String) -> Unit
 ) {
     val topBarBlue = Color(0xFFbfcdf2)
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var searchText by rememberSaveable { mutableStateOf("") }
 
-    // --- NEW: track whether we should show the login screen ---
-    var showLogin by remember { mutableStateOf(false) }
-
-    // 1) If login requested, show your LoginScreen and nothing else
-    if (showLogin) {
-        LoginScreen(
-            onLoginSuccess = { /* handle success */ },
-            onCancel      = { showLogin = false },
-            onRegister    = { /* TODO: navigate to register screen */ }
-        )
-        return
-    }
-
-    // 2) Existing search branch
     if (isSearching) {
         SearchArtistsScreen(
-            searchText        = searchText,
-            onSearchTextChange= { searchText = it },
-            onCancelSearch    = {
+            searchText         = searchText,
+            onSearchTextChange = { searchText = it },
+            onCancelSearch     = {
                 isSearching = false
                 searchText  = ""
             },
-            onArtistSelected  = onArtistSelected
+            onArtistSelected   = onArtistSelected
         )
     } else {
         Scaffold(
@@ -118,9 +105,9 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                // Login button now triggers showLogin = true
+                // Login button now calls onLogin()
                 Button(
-                    onClick         = { showLogin = true },
+                    onClick         = { onLogin() },
                     shape           = RoundedCornerShape(24.dp),
                     contentPadding  = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                 ) {

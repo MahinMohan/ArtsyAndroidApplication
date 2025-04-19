@@ -5,8 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.*
-import com.example.artsyapplication.screenviews.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.artsyapplication.screenviews.HomeScreen
+import com.example.artsyapplication.screenviews.LoginScreen
+import com.example.artsyapplication.screenviews.RegisterScreen
+import com.example.artsyapplication.screenviews.ArtistDetailsScreen
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,18 +33,36 @@ fun AppRouter() {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
+                onLogin = { navController.navigate("login") },
                 onArtistSelected = { id, name ->
                     navController.navigate("artistDetails/$id/$name")
                 }
             )
         }
+
+        composable("login") {
+            LoginScreen(
+                onLoginSuccess = { navController.popBackStack() },
+                onCancel       = { navController.popBackStack() },
+                onRegister     = { navController.navigate("register") }
+            )
+        }
+
+        composable("register") {
+            RegisterScreen(
+                onRegisterSuccess = { navController.popBackStack() },
+                onCancel           = { navController.popBackStack() },
+                onLogin            = { navController.popBackStack() }
+            )
+        }
+
         composable("artistDetails/{artistId}/{artistName}") { backStackEntry ->
-            val artistId = backStackEntry.arguments?.getString("artistId") ?: ""
+            val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""
             ArtistDetailsScreen(
-                artistId = artistId,
+                artistId   = artistId,
                 artistName = artistName,
-                onBack = { navController.popBackStack() }
+                onBack     = { navController.popBackStack() }
             )
         }
     }

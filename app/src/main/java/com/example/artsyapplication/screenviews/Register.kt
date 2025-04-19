@@ -28,8 +28,6 @@ fun RegisterScreen(
     onLogin: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
-
-    // same blue as your other screens
     val topBarBlue = Color(0xFFbfcdf2)
 
     var fullName by remember { mutableStateOf("") }
@@ -121,8 +119,7 @@ fun RegisterScreen(
                             if (!emailTouched) emailTouched = true
                         } else if (emailTouched) {
                             emailError = when {
-                                email.isBlank() ->
-                                    "Email cannot be empty"
+                                email.isBlank() -> "Email cannot be empty"
                                 !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
                                     "Invalid email format"
                                 else -> null
