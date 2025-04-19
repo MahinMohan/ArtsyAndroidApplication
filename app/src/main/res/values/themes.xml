@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <style name="Theme.ArtsyApplication" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary" type="color">#bfcdf2</item>
+        <!-- Your accent color -->
+        <item name="android:colorAccent" type="color">#bfcdf2</item>
+    </style>
+</resources>
