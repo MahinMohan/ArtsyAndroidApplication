@@ -2,9 +2,9 @@ package com.example.artsyapplication.screenviews
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.AccountBox
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,7 +21,8 @@ fun ArtistDetailsScreen(
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("Details", "Artworks")
-    val icons = listOf(Icons.Default.Info, Icons.Default.Image)
+    // swap in the outlined “i” and framed user icon:
+    val icons = listOf(Icons.Outlined.Info, Icons.Outlined.AccountBox)
 
     val tabBar = @Composable {
         TopAppBar(
