@@ -3,7 +3,6 @@ package com.example.artsyapplication.screenviews
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -29,25 +28,39 @@ fun HomeScreen(
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var searchText by rememberSaveable { mutableStateOf("") }
 
+    // --- NEW: track whether we should show the login screen ---
+    var showLogin by remember { mutableStateOf(false) }
+
+    // 1) If login requested, show your LoginScreen and nothing else
+    if (showLogin) {
+        LoginScreen(
+            onLoginSuccess = { /* handle success */ },
+            onCancel      = { showLogin = false },
+            onRegister    = { /* TODO: navigate to register screen */ }
+        )
+        return
+    }
+
+    // 2) Existing search branch
     if (isSearching) {
         SearchArtistsScreen(
-            searchText = searchText,
-            onSearchTextChange = { searchText = it },
-            onCancelSearch = {
+            searchText        = searchText,
+            onSearchTextChange= { searchText = it },
+            onCancelSearch    = {
                 isSearching = false
-                searchText = ""
+                searchText  = ""
             },
-            onArtistSelected = onArtistSelected
+            onArtistSelected  = onArtistSelected
         )
     } else {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            topBar = {
+            topBar   = {
                 TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarBlue),
-                    title = { Text("Artist Search", color = Color.Black) },
+                    colors         = TopAppBarDefaults.topAppBarColors(containerColor = topBarBlue),
+                    title          = { Text("Artist Search", color = Color.Black) },
                     navigationIcon = {},
-                    actions = {
+                    actions        = {
                         IconButton(onClick = { isSearching = true }) {
                             Icon(imageVector = Icons.Filled.Search, contentDescription = "Search")
                         }
@@ -58,46 +71,45 @@ fun HomeScreen(
                 )
             }
         ) { innerPadding ->
-            // --- START ADDED SECTION ---
-            val uriHandler = LocalUriHandler.current
+            val uriHandler  = LocalUriHandler.current
             val currentDate = remember {
                 LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
             }
 
             Column(
-                modifier = Modifier
+                modifier            = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 1) Date row
+                // Date row
                 Surface(
-                    color = MaterialTheme.colorScheme.background,
+                    color    = MaterialTheme.colorScheme.background,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(32.dp)
                 ) {
                     Text(
-                        text = currentDate,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier
+                        text      = currentDate,
+                        style     = MaterialTheme.typography.bodySmall,
+                        modifier  = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp),
                         textAlign = TextAlign.Start
                     )
                 }
 
-                // 2) Favorites bar
+                // Favorites bar
                 Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    color    = MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(32.dp)
                 ) {
                     Text(
-                        text = "Favorites",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
+                        text      = "Favorites",
+                        style     = MaterialTheme.typography.bodyMedium,
+                        modifier  = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp),
                         textAlign = TextAlign.Center
@@ -106,92 +118,26 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                // 3) Login button (pill shape)
+                // Login button now triggers showLogin = true
                 Button(
-                    onClick = { /* TODO: trigger login */ },
-                    shape = RoundedCornerShape(24.dp),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                    onClick         = { showLogin = true },
+                    shape           = RoundedCornerShape(24.dp),
+                    contentPadding  = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                 ) {
                     Text("Log in to see favorites")
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 4) Powered by Artsy link
+                // Powered by Artsy link
                 Text(
-                    text = "Powered by Artsy",
-                    style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
-                    modifier = Modifier
-                        .clickable { uriHandler.openUri("https://www.artsy.net/") }
+                    text     = "Powered by Artsy",
+                    style    = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+                    modifier = Modifier.clickable {
+                        uriHandler.openUri("https://www.artsy.net/")
+                    }
                 )
             }
-
         }
     }
 }
-
-
-
-//package com.example.artsyapplication.screenviews
-//
-//import androidx.compose.foundation.layout.fillMaxSize
-//import androidx.compose.foundation.layout.padding
-//import androidx.compose.foundation.lazy.LazyColumn
-//import androidx.compose.foundation.lazy.items
-//import androidx.compose.material3.*
-//import androidx.compose.material.icons.Icons
-//import androidx.compose.material.icons.filled.Person
-//import androidx.compose.material.icons.filled.Search
-//import androidx.compose.runtime.*
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.graphics.Color
-//import androidx.compose.runtime.saveable.rememberSaveable
-//
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun HomeScreen(
-//    onArtistSelected: (artistId: String, artistName: String) -> Unit
-//) {
-//    val topBarBlue = Color(0xFFbfcdf2)
-//    var isSearching by rememberSaveable { mutableStateOf(false) }
-//    var searchText by rememberSaveable { mutableStateOf("") }
-//
-//    if (isSearching) {
-//        SearchArtistsScreen(
-//            searchText = searchText,
-//            onSearchTextChange = { searchText = it },
-//            onCancelSearch = {
-//                isSearching = false
-//                searchText = ""
-//            },
-//            onArtistSelected = onArtistSelected
-//        )
-//    } else {
-//        Scaffold(
-//            modifier = Modifier.fillMaxSize(),
-//            topBar = {
-//                TopAppBar(
-//                    colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarBlue),
-//                    title = { Text("Artist Search", color = Color.Black) },
-//                    navigationIcon = {},
-//                    actions = {
-//                        IconButton(onClick = { isSearching = true }) {
-//                            Icon(imageVector = Icons.Filled.Search, contentDescription = "Search")
-//                        }
-//                        IconButton(onClick = { /* handle user icon */ }) {
-//                            Icon(imageVector = Icons.Filled.Person, contentDescription = "User")
-//                        }
-//                    }
-//                )
-//            }
-//        ) { innerPadding ->
-//            LazyColumn(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .padding(innerPadding)
-//            ) {
-//                items(items = emptyList<Any>()) { }
-//            }
-//        }
-//    }
-//}
