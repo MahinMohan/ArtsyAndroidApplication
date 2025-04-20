@@ -60,12 +60,18 @@ fun RegisterScreen(
     val focusManager = LocalFocusManager.current
     val topBarBlue    = Color(0xFFbfcdf2)
 
-    var fullName        by remember { mutableStateOf("") }
-    var fullNameError   by remember { mutableStateOf<String?>(null) }
-    var email           by remember { mutableStateOf("") }
-    var emailError      by remember { mutableStateOf<String?>(null) }
-    var password        by remember { mutableStateOf("") }
-    var passwordError   by remember { mutableStateOf<String?>(null) }
+    // form state
+    var fullName      by remember { mutableStateOf("") }
+    var fullNameError by remember { mutableStateOf<String?>(null) }
+    var fullNameTouched by remember { mutableStateOf(false) }
+
+    var email         by remember { mutableStateOf("") }
+    var emailError    by remember { mutableStateOf<String?>(null) }
+    var emailTouched  by remember { mutableStateOf(false) }
+
+    var password      by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var passwordTouched by remember { mutableStateOf(false) }
 
     var isRegistering by remember { mutableStateOf(false) }
     var registerError by remember { mutableStateOf<String?>(null) }
@@ -99,15 +105,15 @@ fun RegisterScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp),
-            verticalArrangement   = Arrangement.Center,
-            horizontalAlignment   = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Full Name field
             OutlinedTextField(
                 value = fullName,
                 onValueChange = {
-                    fullNameError = null
-                    fullName      = it
+                    fullName = it
+                    if (fullNameError != null) fullNameError = null
                 },
                 label      = { Text("Full Name") },
                 isError    = fullNameError != null,
@@ -115,7 +121,9 @@ fun RegisterScreen(
                 modifier   = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { fs ->
-                        if (!fs.isFocused && fullName.isBlank()) {
+                        if (fs.isFocused) {
+                            fullNameTouched = true
+                        } else if (fullNameTouched && fullName.isBlank()) {
                             fullNameError = "Full name cannot be empty"
                         }
                     },
@@ -124,9 +132,9 @@ fun RegisterScreen(
                     onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
                 )
             )
-            fullNameError?.let {
+            if (fullNameTouched && fullNameError != null) {
                 Text(
-                    it,
+                    fullNameError!!,
                     color    = MaterialTheme.colorScheme.error,
                     style    = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
@@ -139,8 +147,8 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = {
-                    emailError = null
-                    email      = it
+                    email = it
+                    if (emailError != null) emailError = null
                 },
                 label      = { Text("Email") },
                 isError    = emailError != null,
@@ -148,7 +156,9 @@ fun RegisterScreen(
                 modifier   = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { fs ->
-                        if (!fs.isFocused) {
+                        if (fs.isFocused) {
+                            emailTouched = true
+                        } else if (emailTouched) {
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
                                 !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Invalid format"
@@ -161,9 +171,9 @@ fun RegisterScreen(
                     onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
                 )
             )
-            emailError?.let {
+            if (emailTouched && emailError != null) {
                 Text(
-                    it,
+                    emailError!!,
                     color    = MaterialTheme.colorScheme.error,
                     style    = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
@@ -176,8 +186,8 @@ fun RegisterScreen(
             OutlinedTextField(
                 value               = password,
                 onValueChange       = {
-                    passwordError = null
-                    password      = it
+                    password = it
+                    if (passwordError != null) passwordError = null
                 },
                 label               = { Text("Password") },
                 isError             = passwordError != null,
@@ -186,7 +196,9 @@ fun RegisterScreen(
                 modifier            = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { fs ->
-                        if (!fs.isFocused && password.isBlank()) {
+                        if (fs.isFocused) {
+                            passwordTouched = true
+                        } else if (passwordTouched && password.isBlank()) {
                             passwordError = "Password cannot be empty"
                         }
                     },
@@ -195,9 +207,9 @@ fun RegisterScreen(
                     onDone = { focusManager.clearFocus() }
                 )
             )
-            passwordError?.let {
+            if (passwordTouched && passwordError != null) {
                 Text(
-                    it,
+                    passwordError!!,
                     color    = MaterialTheme.colorScheme.error,
                     style    = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
@@ -215,9 +227,9 @@ fun RegisterScreen(
 
                         val (code, body) = withContext(Dispatchers.IO) {
                             try {
-                                val resp = RegisterClient.api.register(
-                                    RegisterRequest(fullName, email, password)
-                                )
+                                val resp = RegisterClient
+                                    .api
+                                    .register(RegisterRequest(fullName, email, password))
                                 val text = resp.errorBody()?.string()
                                     ?: resp.body()?.string()
                                     ?: ""
