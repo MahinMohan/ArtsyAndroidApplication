@@ -22,9 +22,34 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
+import retrofit2.http.POST
+
+// --- Retrofit setup in this file ---
+
+data class LoginRequest(val email: String, val password: String)
+
+interface LoginApiService {
+    @POST("api/login")
+    suspend fun login(@Body request: LoginRequest): Response<ResponseBody>
+}
+
+object LoginClient {
+    val api: LoginApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:3000/")
+            .client(OkHttpClient.Builder().build())
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(LoginApiService::class.java)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,15 +129,11 @@ fun LoginScreen(
                     onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
                 )
             )
-            if (emailError != null) {
-                Text(
-                    text = emailError!!,
+            emailError?.let {
+                Text(it,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                        .padding(top = 4.dp)
-                )
+                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp))
             }
 
             Spacer(Modifier.height(16.dp))
@@ -144,54 +165,39 @@ fun LoginScreen(
                     onDone = { focusManager.clearFocus() }
                 )
             )
-            if (passwordError != null) {
-                Text(
-                    text = passwordError!!,
+            passwordError?.let {
+                Text(it,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                        .padding(top = 4.dp)
-                )
+                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp))
             }
 
             Spacer(Modifier.height(24.dp))
 
-            // Login button: disabled until valid & shows spinner while logging in
+            // Login button
             Button(
                 onClick = {
                     scope.launch {
                         isLoggingIn = true
                         loginError  = null
 
-                        // Perform network call off main thread
-                        val (responseCode, responseBody) = withContext(Dispatchers.IO) {
+                        val (code, body) = withContext(Dispatchers.IO) {
                             try {
-                                val payload = JSONObject()
-                                    .put("email", email)
-                                    .put("password", password)
-                                    .toString()
-
-                                val conn = (URL("http://10.0.2.2:3000/api/login")
-                                    .openConnection() as HttpURLConnection).apply {
-                                    requestMethod    = "POST"
-                                    setRequestProperty("Content-Type", "application/json")
-                                    doOutput         = true
-                                    outputStream.use { it.write(payload.toByteArray()) }
-                                }
-
-                                val body = conn.inputStream.bufferedReader().use { it.readText() }
-                                System.out.println("Login API response: $body")
-                                Pair(conn.responseCode, body)
+                                val resp = LoginClient.api.login(LoginRequest(email, password))
+                                val text = resp.errorBody()?.string() ?: resp.body()?.string() ?: ""
+                                Pair(resp.code(), text)
                             } catch (e: Exception) {
                                 e.printStackTrace()
                                 Pair(-1, "")
                             }
                         }
 
-                        // Back on main thread: check for "message" key
-                        val json = responseBody.takeIf { it.isNotBlank() }?.let { JSONObject(it) }
-                        if (json?.has("message") == true) {
+                        System.out.println("Login API response: $body")
+
+                        val msg = body.takeIf { it.isNotBlank() }?.let {
+                            JSONObject(it).optString("message", null)
+                        }
+                        if (msg != null) {
                             loginError = "Username or password is incorrect"
                         } else {
                             onLoginSuccess()
@@ -213,26 +219,21 @@ fun LoginScreen(
                 }
             }
 
-            if (loginError != null) {
-                Text(
-                    text = loginError!!,
+            loginError?.let {
+                Text(it,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                    modifier = Modifier.padding(top = 8.dp))
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // Register prompt
             Row {
                 Text("Don't have an account yet? ")
-                Text(
-                    "Register",
-                    color          = MaterialTheme.colorScheme.primary,
+                Text("Register",
+                    color = MaterialTheme.colorScheme.primary,
                     textDecoration = TextDecoration.Underline,
-                    modifier       = Modifier.clickable(onClick = onRegister)
-                )
+                    modifier = Modifier.clickable(onClick = onRegister))
             }
         }
     }
