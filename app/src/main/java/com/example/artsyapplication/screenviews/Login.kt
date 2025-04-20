@@ -19,6 +19,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +34,7 @@ fun LoginScreen(
     onRegister: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
-    val topBarBlue = Color(0xFFbfcdf2)
+    val topBarBlue   = Color(0xFFbfcdf2)
 
     var email by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
@@ -41,10 +47,17 @@ fun LoginScreen(
     var isLoggingIn by remember { mutableStateOf(false) }
     var loginError by remember { mutableStateOf<String?>(null) }
 
+    val scope = rememberCoroutineScope()
+
+    val formValid = email.isNotBlank() &&
+            password.isNotBlank() &&
+            emailError == null &&
+            passwordError == null
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Login") },
+                title          = { Text("Login") },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -69,8 +82,8 @@ fun LoginScreen(
                     email = it
                     if (emailError != null) emailError = null
                 },
-                label = { Text("Email") },
-                isError = emailError != null,
+                label    = { Text("Email") },
+                isError  = emailError != null,
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -111,8 +124,8 @@ fun LoginScreen(
                     password = it
                     if (passwordError != null) passwordError = null
                 },
-                label = { Text("Password") },
-                isError = passwordError != null,
+                label    = { Text("Password") },
+                isError  = passwordError != null,
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier
@@ -144,20 +157,55 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Login button
+            // Login button: disabled until valid & shows spinner while logging in
             Button(
                 onClick = {
-                    isLoggingIn = true
-                    loginError = null
-                    onLoginSuccess()
-                    isLoggingIn = false
+                    scope.launch {
+                        isLoggingIn = true
+                        loginError  = null
+
+                        // Perform network call off main thread
+                        val (responseCode, responseBody) = withContext(Dispatchers.IO) {
+                            try {
+                                val payload = JSONObject()
+                                    .put("email", email)
+                                    .put("password", password)
+                                    .toString()
+
+                                val conn = (URL("http://10.0.2.2:3000/api/login")
+                                    .openConnection() as HttpURLConnection).apply {
+                                    requestMethod    = "POST"
+                                    setRequestProperty("Content-Type", "application/json")
+                                    doOutput         = true
+                                    outputStream.use { it.write(payload.toByteArray()) }
+                                }
+
+                                val body = conn.inputStream.bufferedReader().use { it.readText() }
+                                System.out.println("Login API response: $body")
+                                Pair(conn.responseCode, body)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                Pair(-1, "")
+                            }
+                        }
+
+                        // Back on main thread: check for "message" key
+                        val json = responseBody.takeIf { it.isNotBlank() }?.let { JSONObject(it) }
+                        if (json?.has("message") == true) {
+                            loginError = "Username or password is incorrect"
+                        } else {
+                            onLoginSuccess()
+                        }
+
+                        isLoggingIn = false
+                    }
                 },
-                enabled = !isLoggingIn,
+                enabled = !isLoggingIn && formValid,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (isLoggingIn) {
                     CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color    = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(24.dp)
                     )
                 } else {
@@ -181,9 +229,9 @@ fun LoginScreen(
                 Text("Don't have an account yet? ")
                 Text(
                     "Register",
-                    color = MaterialTheme.colorScheme.primary,
+                    color          = MaterialTheme.colorScheme.primary,
                     textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable(onClick = onRegister)
+                    modifier       = Modifier.clickable(onClick = onRegister)
                 )
             }
         }
