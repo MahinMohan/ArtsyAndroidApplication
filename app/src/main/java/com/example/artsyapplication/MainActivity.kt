@@ -12,7 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.artsyapplication.screenviews.*
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
 
-// Simple holder for the bits we care about from login
+// Holds the bits we care about from login or registration
 data class LoggedInUser(
     val _id: String,
     val fullname: String,
@@ -35,15 +35,15 @@ class MainActivity : ComponentActivity() {
 fun AppRouter() {
     val navController = rememberNavController()
 
-    // track logged‑in user (or null if not)
+    // track logged‑in user (or null if logged out)
     var currentUser by rememberSaveable { mutableStateOf<LoggedInUser?>(null) }
 
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
-                user            = currentUser,
-                onLogin         = { navController.navigate("login") },
-                onArtistSelected= { id, name ->
+                user             = currentUser,
+                onLogin          = { navController.navigate("login") },
+                onArtistSelected = { id, name ->
                     navController.navigate("artistDetails/$id/$name")
                 }
             )
@@ -62,7 +62,8 @@ fun AppRouter() {
 
         composable("register") {
             RegisterScreen(
-                onRegisterSuccess = {
+                onRegisterSuccess = { user ->
+                    currentUser = user
                     navController.navigate("home") {
                         popUpTo("home") { inclusive = true }
                     }

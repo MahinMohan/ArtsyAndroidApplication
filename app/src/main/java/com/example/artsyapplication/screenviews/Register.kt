@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.example.artsyapplication.LoggedInUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,7 +32,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-// --- Retrofit setup in this file ---
 data class RegisterRequest(val fullname: String, val email: String, val password: String)
 
 interface RegisterApiService {
@@ -53,32 +53,26 @@ object RegisterClient {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,
-    onCancel: () -> Unit,
-    onLogin: () -> Unit
+    onRegisterSuccess: (LoggedInUser) -> Unit,
+    onCancel:           () -> Unit,
+    onLogin:            () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
-    val topBarBlue = Color(0xFFbfcdf2)
+    val topBarBlue    = Color(0xFFbfcdf2)
 
-    var fullName by remember { mutableStateOf("") }
-    var fullNameTouched by remember { mutableStateOf(false) }
-    var fullNameError by remember { mutableStateOf<String?>(null) }
-
-    var email by remember { mutableStateOf("") }
-    var emailTouched by remember { mutableStateOf(false) }
-    var emailError by remember { mutableStateOf<String?>(null) }
-
-    var password by remember { mutableStateOf("") }
-    var passwordTouched by remember { mutableStateOf(false) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
+    var fullName        by remember { mutableStateOf("") }
+    var fullNameError   by remember { mutableStateOf<String?>(null) }
+    var email           by remember { mutableStateOf("") }
+    var emailError      by remember { mutableStateOf<String?>(null) }
+    var password        by remember { mutableStateOf("") }
+    var passwordError   by remember { mutableStateOf<String?>(null) }
 
     var isRegistering by remember { mutableStateOf(false) }
     var registerError by remember { mutableStateOf<String?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val scope             = rememberCoroutineScope()
 
-    // enable only when all fields non‑blank and no field errors
     val formValid = fullName.isNotBlank() &&
             email.isNotBlank() &&
             password.isNotBlank() &&
@@ -89,7 +83,7 @@ fun RegisterScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Register") },
+                title          = { Text("Register") },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -101,30 +95,28 @@ fun RegisterScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement   = Arrangement.Center,
+            horizontalAlignment   = Alignment.CenterHorizontally
         ) {
             // Full Name field
             OutlinedTextField(
                 value = fullName,
                 onValueChange = {
-                    fullName = it
-                    if (fullNameError != null) fullNameError = null
+                    fullNameError = null
+                    fullName      = it
                 },
-                label = { Text("Full Name") },
-                isError = fullNameError != null,
+                label      = { Text("Full Name") },
+                isError    = fullNameError != null,
                 singleLine = true,
-                modifier = Modifier
+                modifier   = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { fs ->
-                        if (fs.isFocused && !fullNameTouched) {
-                            fullNameTouched = true
-                        } else if (!fs.isFocused && fullNameTouched) {
-                            fullNameError = if (fullName.isBlank()) "Full name cannot be empty" else null
+                        if (!fs.isFocused && fullName.isBlank()) {
+                            fullNameError = "Full name cannot be empty"
                         }
                     },
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
@@ -135,8 +127,8 @@ fun RegisterScreen(
             fullNameError?.let {
                 Text(
                     it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
+                    color    = MaterialTheme.colorScheme.error,
+                    style    = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
                 )
             }
@@ -147,22 +139,19 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = {
-                    email = it
-                    if (emailError != null) emailError = null
+                    emailError = null
+                    email      = it
                 },
-                label = { Text("Email") },
-                isError = emailError != null,
+                label      = { Text("Email") },
+                isError    = emailError != null,
                 singleLine = true,
-                modifier = Modifier
+                modifier   = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { fs ->
-                        if (fs.isFocused && !emailTouched) {
-                            emailTouched = true
-                        } else if (!fs.isFocused && emailTouched) {
+                        if (!fs.isFocused) {
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-                                    "Invalid email format"
+                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Invalid format"
                                 else -> null
                             }
                         }
@@ -175,8 +164,8 @@ fun RegisterScreen(
             emailError?.let {
                 Text(
                     it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
+                    color    = MaterialTheme.colorScheme.error,
+                    style    = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
                 )
             }
@@ -185,54 +174,50 @@ fun RegisterScreen(
 
             // Password field
             OutlinedTextField(
-                value = password,
-                onValueChange = {
-                    password = it
-                    if (passwordError != null) passwordError = null
+                value               = password,
+                onValueChange       = {
+                    passwordError = null
+                    password      = it
                 },
-                label = { Text("Password") },
-                isError = passwordError != null,
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier
+                label               = { Text("Password") },
+                isError             = passwordError != null,
+                singleLine          = true,
+                visualTransformation= PasswordVisualTransformation(),
+                modifier            = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { fs ->
-                        if (fs.isFocused && !passwordTouched) {
-                            passwordTouched = true
-                        } else if (!fs.isFocused && passwordTouched) {
-                            passwordError = if (password.isBlank()) "Password cannot be empty" else null
+                        if (!fs.isFocused && password.isBlank()) {
+                            passwordError = "Password cannot be empty"
                         }
                     },
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
+                keyboardOptions     = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                keyboardActions     = KeyboardActions(
                     onDone = { focusManager.clearFocus() }
                 )
             )
             passwordError?.let {
                 Text(
                     it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
+                    color    = MaterialTheme.colorScheme.error,
+                    style    = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
                 )
             }
 
             Spacer(Modifier.height(24.dp))
 
-            // Register button: disabled until valid, spinner while registering
+            // Register button
             Button(
                 onClick = {
                     scope.launch {
                         isRegistering = true
                         registerError = null
-                        emailError = null
 
-                        // network call off main thread
                         val (code, body) = withContext(Dispatchers.IO) {
                             try {
-                                val resp = RegisterClient
-                                    .api
-                                    .register(RegisterRequest(fullName, email, password))
+                                val resp = RegisterClient.api.register(
+                                    RegisterRequest(fullName, email, password)
+                                )
                                 val text = resp.errorBody()?.string()
                                     ?: resp.body()?.string()
                                     ?: ""
@@ -243,33 +228,29 @@ fun RegisterScreen(
                             }
                         }
 
-                        // debug print
-                        System.out.println("Register API response: $body")
-
-                        val msg = body.takeIf { it.isNotBlank() }?.let {
-                            JSONObject(it).optString("message", null)
-                        }
-
-                        when {
-                            msg == "User with this email already exists" ->
-                                emailError = "Email already exists"
-                            code == 200 -> {
-                                snackbarHostState.showSnackbar("Registered successfully")
-                                onRegisterSuccess()
-                            }
-                            else ->
-                                registerError = msg ?: "Registration failed"
+                        if (code == 200 && body.isNotBlank()) {
+                            val obj = JSONObject(body)
+                            val user = LoggedInUser(
+                                _id      = obj.getString("_id"),
+                                fullname = obj.getString("fullname"),
+                                gravatar = obj.getString("gravatar")
+                            )
+                            snackbarHostState.showSnackbar("Registered successfully")
+                            onRegisterSuccess(user)
+                        } else {
+                            val msg = JSONObject(body).optString("message", null)
+                            registerError = msg ?: "Registration failed"
                         }
 
                         isRegistering = false
                     }
                 },
-                enabled = !isRegistering && formValid,
+                enabled  = !isRegistering && formValid,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (isRegistering) {
                     CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color    = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(24.dp)
                     )
                 } else {
@@ -280,22 +261,21 @@ fun RegisterScreen(
             registerError?.let {
                 Text(
                     it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
+                    color    = MaterialTheme.colorScheme.error,
+                    style    = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // Already have an account?
             Row {
                 Text("Already have an account? ")
                 Text(
                     "Login",
-                    color = MaterialTheme.colorScheme.primary,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable(onClick = onLogin)
+                    color           = MaterialTheme.colorScheme.primary,
+                    textDecoration  = TextDecoration.Underline,
+                    modifier        = Modifier.clickable(onClick = onLogin)
                 )
             }
         }

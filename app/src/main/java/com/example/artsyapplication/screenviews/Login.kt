@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.example.artsyapplication.LoggedInUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,7 +31,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
-import com.example.artsyapplication.LoggedInUser
 
 data class LoginRequest(val email: String, val password: String)
 
@@ -54,22 +54,22 @@ object LoginClient {
 @Composable
 fun LoginScreen(
     onLoginSuccess: (LoggedInUser) -> Unit,
-    onCancel: () -> Unit,
-    onRegister: () -> Unit
+    onCancel:       () -> Unit,
+    onRegister:     () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val topBarBlue   = Color(0xFFbfcdf2)
 
-    var email by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var emailTouched by remember { mutableStateOf(false) }
+    var email          by remember { mutableStateOf("") }
+    var emailError     by remember { mutableStateOf<String?>(null) }
+    var emailTouched   by remember { mutableStateOf(false) }
 
-    var password by remember { mutableStateOf("") }
-    var passwordError by remember { mutableStateOf<String?>(null) }
+    var password        by remember { mutableStateOf("") }
+    var passwordError   by remember { mutableStateOf<String?>(null) }
     var passwordTouched by remember { mutableStateOf(false) }
 
     var isLoggingIn by remember { mutableStateOf(false) }
-    var loginError by remember { mutableStateOf<String?>(null) }
+    var loginError  by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
 
@@ -106,10 +106,10 @@ fun LoginScreen(
                     email = it
                     if (emailError != null) emailError = null
                 },
-                label    = { Text("Email") },
-                isError  = emailError != null,
-                singleLine = true,
-                modifier = Modifier
+                label       = { Text("Email") },
+                isError     = emailError != null,
+                singleLine  = true,
+                modifier    = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { fs ->
                         if (fs.isFocused) {
@@ -129,26 +129,28 @@ fun LoginScreen(
                 )
             )
             emailError?.let {
-                Text(it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp))
+                Text(
+                    it,
+                    color    = MaterialTheme.colorScheme.error,
+                    style    = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
+                )
             }
 
             Spacer(Modifier.height(16.dp))
 
             // Password field
             OutlinedTextField(
-                value = password,
-                onValueChange = {
+                value               = password,
+                onValueChange       = {
                     password = it
                     if (passwordError != null) passwordError = null
                 },
-                label    = { Text("Password") },
-                isError  = passwordError != null,
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier
+                label               = { Text("Password") },
+                isError             = passwordError != null,
+                singleLine          = true,
+                visualTransformation= PasswordVisualTransformation(),
+                modifier            = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { fs ->
                         if (fs.isFocused) {
@@ -159,16 +161,18 @@ fun LoginScreen(
                             } else null
                         }
                     },
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
+                keyboardOptions     = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                keyboardActions     = KeyboardActions(
                     onDone = { focusManager.clearFocus() }
                 )
             )
             passwordError?.let {
-                Text(it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp))
+                Text(
+                    it,
+                    color    = MaterialTheme.colorScheme.error,
+                    style    = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
+                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -191,8 +195,6 @@ fun LoginScreen(
                             }
                         }
 
-                        System.out.println("Login API response: $body")
-
                         if (code == 200 && body.isNotBlank()) {
                             val obj = JSONObject(body)
                             val user = LoggedInUser(
@@ -208,7 +210,7 @@ fun LoginScreen(
                         isLoggingIn = false
                     }
                 },
-                enabled = !isLoggingIn && formValid,
+                enabled  = !isLoggingIn && formValid,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (isLoggingIn) {
@@ -222,20 +224,24 @@ fun LoginScreen(
             }
 
             loginError?.let {
-                Text(it,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp))
+                Text(
+                    it,
+                    color    = MaterialTheme.colorScheme.error,
+                    style    = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
 
             Spacer(Modifier.height(16.dp))
 
             Row {
                 Text("Don't have an account yet? ")
-                Text("Register",
-                    color = MaterialTheme.colorScheme.primary,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable(onClick = onRegister))
+                Text(
+                    "Register",
+                    color           = MaterialTheme.colorScheme.primary,
+                    textDecoration  = TextDecoration.Underline,
+                    modifier        = Modifier.clickable(onClick = onRegister)
+                )
             }
         }
     }
