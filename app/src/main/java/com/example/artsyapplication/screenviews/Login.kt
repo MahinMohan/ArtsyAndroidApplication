@@ -30,8 +30,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
-
-
+import com.example.artsyapplication.LoggedInUser
 
 data class LoginRequest(val email: String, val password: String)
 
@@ -54,7 +53,7 @@ object LoginClient {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (LoggedInUser) -> Unit,
     onCancel: () -> Unit,
     onRegister: () -> Unit
 ) {
@@ -194,13 +193,16 @@ fun LoginScreen(
 
                         System.out.println("Login API response: $body")
 
-                        val msg = body.takeIf { it.isNotBlank() }?.let {
-                            JSONObject(it).optString("message", null)
-                        }
-                        if (msg != null) {
-                            loginError = "Username or password is incorrect"
+                        if (code == 200 && body.isNotBlank()) {
+                            val obj = JSONObject(body)
+                            val user = LoggedInUser(
+                                _id      = obj.getString("_id"),
+                                fullname = obj.getString("fullname"),
+                                gravatar = obj.getString("gravatar")
+                            )
+                            onLoginSuccess(user)
                         } else {
-                            onLoginSuccess()
+                            loginError = "Username or password is incorrect"
                         }
 
                         isLoggingIn = false

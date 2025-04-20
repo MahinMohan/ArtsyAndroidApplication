@@ -4,15 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.artsyapplication.screenviews.HomeScreen
-import com.example.artsyapplication.screenviews.LoginScreen
-import com.example.artsyapplication.screenviews.RegisterScreen
-import com.example.artsyapplication.screenviews.ArtistDetailsScreen
+import com.example.artsyapplication.screenviews.*
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
+
+// Simple holder for the bits we care about from login
+data class LoggedInUser(
+    val _id: String,
+    val fullname: String,
+    val gravatar: String
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,11 +35,15 @@ class MainActivity : ComponentActivity() {
 fun AppRouter() {
     val navController = rememberNavController()
 
+    // track logged‑in user (or null if not)
+    var currentUser by rememberSaveable { mutableStateOf<LoggedInUser?>(null) }
+
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
-                onLogin = { navController.navigate("login") },
-                onArtistSelected = { id, name ->
+                user            = currentUser,
+                onLogin         = { navController.navigate("login") },
+                onArtistSelected= { id, name ->
                     navController.navigate("artistDetails/$id/$name")
                 }
             )
@@ -42,9 +51,12 @@ fun AppRouter() {
 
         composable("login") {
             LoginScreen(
-                onLoginSuccess = { navController.popBackStack() },
-                onCancel       = { navController.popBackStack() },
-                onRegister     = { navController.navigate("register") }
+                onLoginSuccess = { user ->
+                    currentUser = user
+                    navController.popBackStack()
+                },
+                onCancel   = { navController.popBackStack() },
+                onRegister = { navController.navigate("register") }
             )
         }
 
@@ -52,12 +64,11 @@ fun AppRouter() {
             RegisterScreen(
                 onRegisterSuccess = {
                     navController.navigate("home") {
-                        // clear the back stack so the user can’t back‑navigate to register/login
                         popUpTo("home") { inclusive = true }
                     }
                 },
-                onCancel           = { navController.popBackStack() },
-                onLogin            = { navController.popBackStack() }
+                onCancel = { navController.popBackStack() },
+                onLogin  = { navController.popBackStack() }
             )
         }
 
