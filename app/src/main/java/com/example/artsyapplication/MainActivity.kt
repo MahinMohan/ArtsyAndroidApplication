@@ -50,7 +50,12 @@ fun AppRouter() {
 
         composable("register") {
             RegisterScreen(
-                onRegisterSuccess = { navController.popBackStack() },
+                onRegisterSuccess = {
+                    navController.navigate("home") {
+                        // clear the back stack so the user can’t back‑navigate to register/login
+                        popUpTo("home") { inclusive = true }
+                    }
+                },
                 onCancel           = { navController.popBackStack() },
                 onLogin            = { navController.popBackStack() }
             )

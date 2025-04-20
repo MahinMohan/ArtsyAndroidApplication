@@ -124,7 +124,7 @@ fun RegisterScreen(
                         if (fs.isFocused && !fullNameTouched) {
                             fullNameTouched = true
                         } else if (!fs.isFocused && fullNameTouched) {
-                            fullNameError = if (fullName.isBlank()) "Fullname cannot be empty" else null
+                            fullNameError = if (fullName.isBlank()) "Full name cannot be empty" else null
                         }
                     },
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
