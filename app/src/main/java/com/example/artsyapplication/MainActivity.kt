@@ -1,4 +1,4 @@
-
+// MainActivity.kt
 package com.example.artsyapplication
 import android.content.Context
 import android.content.SharedPreferences
@@ -84,7 +84,7 @@ class PersistentCookieJar(context: Context) : CookieJar {
         return valid
     }
 }
-
+// --------------------------------------------------------------
 
 data class LoggedInUser(
     val _id: String,
@@ -94,7 +94,7 @@ data class LoggedInUser(
 
 class MainActivity : ComponentActivity() {
     companion object {
-
+        // Will be initialized in onCreate
         lateinit var cookieJar: PersistentCookieJar
 
         /** Use this single client everywhere */
@@ -107,7 +107,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
+        // Initialize persistent cookie jar
         cookieJar = PersistentCookieJar(applicationContext)
 
         enableEdgeToEdge()
