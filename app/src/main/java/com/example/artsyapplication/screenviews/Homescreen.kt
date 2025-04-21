@@ -30,6 +30,7 @@ import java.time.format.DateTimeFormatter
 fun HomeScreen(
     user: LoggedInUser?,
     onLogin: () -> Unit,
+    onLogout: () -> Unit,                                     // ← new
     onArtistSelected: (artistId: String, artistName: String) -> Unit
 ) {
     val topBarBlue = Color(0xFFbfcdf2)
@@ -63,14 +64,40 @@ fun HomeScreen(
                                 Icon(imageVector = Icons.Filled.Person, contentDescription = "User")
                             }
                         } else {
-                            IconButton(onClick = { /* optional profile/logout */ }) {
-                                Image(
-                                    painter            = rememberAsyncImagePainter(user.gravatar),
-                                    contentDescription = user.fullname,
-                                    modifier           = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                )
+                            var menuExpanded by remember { mutableStateOf(false) }
+                            Box {
+                                IconButton(onClick = { menuExpanded = true }) {
+                                    Image(
+                                        painter            = rememberAsyncImagePainter(user.gravatar),
+                                        contentDescription = user.fullname,
+                                        modifier           = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text("Log out", color = Color.Blue)
+                                        },
+                                        onClick = {
+                                            onLogout()               // ← clear user & reset UI
+                                            menuExpanded = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text("Delete account", color = Color.Red)
+                                        },
+                                        onClick = {
+                                            // TODO: wire up delete‑account logic
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

@@ -9,7 +9,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.artsyapplication.screenviews.*
+import com.example.artsyapplication.screenviews.HomeScreen
+import com.example.artsyapplication.screenviews.LoginScreen
+import com.example.artsyapplication.screenviews.RegisterScreen
+import com.example.artsyapplication.screenviews.ArtistDetailsScreen
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
 
 // Holds the bits we care about from login or registration
@@ -43,6 +46,7 @@ fun AppRouter() {
             HomeScreen(
                 user             = currentUser,
                 onLogin          = { navController.navigate("login") },
+                onLogout         = { currentUser = null },       // ← clear user on logout
                 onArtistSelected = { id, name ->
                     navController.navigate("artistDetails/$id/$name")
                 }
