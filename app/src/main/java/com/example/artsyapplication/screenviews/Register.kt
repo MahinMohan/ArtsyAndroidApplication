@@ -60,7 +60,7 @@ fun RegisterScreen(
     val focusManager = LocalFocusManager.current
     val topBarBlue    = Color(0xFFbfcdf2)
 
-    // form state
+
     var fullName      by remember { mutableStateOf("") }
     var fullNameError by remember { mutableStateOf<String?>(null) }
     var fullNameTouched by remember { mutableStateOf(false) }
@@ -108,7 +108,7 @@ fun RegisterScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Full Name field
+
             OutlinedTextField(
                 value = fullName,
                 onValueChange = {
@@ -143,7 +143,7 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Email field
+
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -182,7 +182,7 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Password field
+
             OutlinedTextField(
                 value               = password,
                 onValueChange       = {
@@ -218,7 +218,7 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Register button
+
             Button(
                 onClick = {
                     scope.launch {

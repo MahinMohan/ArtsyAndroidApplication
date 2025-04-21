@@ -23,7 +23,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// --- models ---
+
 data class GenesResponse(
     @SerializedName("_embedded") val embedded: EmbeddedGenes
 )
@@ -36,7 +36,7 @@ data class CategoryData(
     @SerializedName("_links") val links: Links?
 )
 
-// --- retrofit ---
+
 private interface GenesApiService {
     @GET("api/genesdata")
     suspend fun getGenes(@Query("id") id: String): Response<GenesResponse>
@@ -49,18 +49,18 @@ private val genesService: GenesApiService by lazy {
         .create(GenesApiService::class.java)
 }
 
-// --- Composable ---
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Categories(
     artworkId: String,
     onDismiss: () -> Unit
 ) {
-    // 1) Loading flag
+
     var isLoading by remember { mutableStateOf(true) }
     var index by remember { mutableStateOf(0) }
 
-    // 2) Fetch categories
+
     val genes by produceState<List<CategoryData>>(initialValue = emptyList(), artworkId) {
         isLoading = true
         try {
@@ -89,7 +89,7 @@ fun Categories(
                 Text("Categories", style = MaterialTheme.typography.headlineSmall)
 
                 when {
-                    // 3) Show loading while fetching
+
                     isLoading -> {
                         Box(
                             Modifier
@@ -100,7 +100,7 @@ fun Categories(
                             Text("Loading…", style = MaterialTheme.typography.bodyMedium)
                         }
                     }
-                    // 4) After load, if empty, show no categories
+
                     genes.isEmpty() -> {
                         Box(
                             Modifier
@@ -111,7 +111,7 @@ fun Categories(
                             Text("No categories available", style = MaterialTheme.typography.bodyMedium)
                         }
                     }
-                    // 5) Otherwise show your pager
+
                     else -> {
                         Box(
                             Modifier

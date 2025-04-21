@@ -94,7 +94,7 @@ fun ArtistInfo(artistId: String) {
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Justify
                 )
-                Spacer(modifier = Modifier.height(32.dp)) // extra spacing at bottom
+                Spacer(modifier = Modifier.height(32.dp))
             }
         } ?: Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No artist info found.")

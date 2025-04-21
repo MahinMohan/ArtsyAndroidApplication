@@ -15,7 +15,7 @@ import com.example.artsyapplication.screenviews.RegisterScreen
 import com.example.artsyapplication.screenviews.ArtistDetailsScreen
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
 
-// Holds the bits we care about from login or registration
+
 data class LoggedInUser(
     val _id: String,
     val fullname: String,
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
 fun AppRouter() {
     val navController = rememberNavController()
 
-    // track logged‑in user (or null if logged out)
+
     var currentUser by rememberSaveable { mutableStateOf<LoggedInUser?>(null) }
 
     NavHost(navController = navController, startDestination = "home") {

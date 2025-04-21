@@ -99,7 +99,7 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Email field
+
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -139,7 +139,7 @@ fun LoginScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Password field
+
             OutlinedTextField(
                 value               = password,
                 onValueChange       = {
@@ -177,7 +177,7 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Login button
+
             Button(
                 onClick = {
                     scope.launch {

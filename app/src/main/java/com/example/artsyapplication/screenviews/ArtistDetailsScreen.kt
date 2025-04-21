@@ -18,18 +18,18 @@ import com.example.artsyapplication.screenviews.Similarartists
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArtistDetailsScreen(
-    user: LoggedInUser?,        // ← new parameter
+    user: LoggedInUser?,
     artistId: String,
     artistName: String,
     onBack: () -> Unit
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
 
-    // original two tabs...
+
     val baseTabs  = listOf("Details", "Artworks")
     val baseIcons = listOf(Icons.Outlined.Info, Icons.Outlined.AccountBox)
 
-    // ...and only if logged in append "Similar"
+
     val tabs  = if (user != null) baseTabs + "Similar" else baseTabs
     val icons = if (user != null) baseIcons + Icons.Filled.PersonSearch else baseIcons
 

@@ -111,7 +111,7 @@ fun HomeScreen(
                     .padding(innerPadding),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Date row
+
                 Surface(
                     color    = MaterialTheme.colorScheme.background,
                     modifier = Modifier
@@ -128,7 +128,7 @@ fun HomeScreen(
                     )
                 }
 
-                // Favorites bar
+
                 Surface(
                     color    = MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier

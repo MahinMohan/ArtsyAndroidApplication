@@ -26,13 +26,13 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// 1. Data model for “similar artists”
+
 data class SimilarArtist(
     @SerializedName("name") val name: String?,
     @SerializedName("_links") val links: Links?
 )
 
-// 2. Wrapper for the embedded artists array
+
 data class EmbeddedArtists(
     @SerializedName("artists") val artists: List<SimilarArtist>?
 )
@@ -41,13 +41,13 @@ data class SimilarArtistsResponse(
     @SerializedName("_embedded") val embedded: EmbeddedArtists?
 )
 
-// 3. Retrofit interface
+
 interface SimilarApiService {
     @GET("api/similarartists")
     suspend fun getSimilarArtists(@Query("id") id: String): Response<SimilarArtistsResponse>
 }
 
-// 4. Retrofit client instance
+
 object SimilarRetrofitClient {
     private const val BASE_URL = "http://10.0.2.2:3000/"
     val instance: SimilarApiService by lazy {
@@ -61,10 +61,10 @@ object SimilarRetrofitClient {
 
 @Composable
 fun Similarartists(artistId: String) {
-    // hold our API results
+
     val similarResults = remember { mutableStateOf<List<SimilarArtist>>(emptyList()) }
 
-    // fetch on first composition or when artistId changes
+
     LaunchedEffect(artistId) {
         try {
             val resp = SimilarRetrofitClient.instance.getSimilarArtists(artistId)
@@ -81,7 +81,7 @@ fun Similarartists(artistId: String) {
         }
     }
 
-    // display them in a lazy column of cards
+
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(similarResults.value) { artist ->
             SimilarArtistCard(artist)
@@ -89,7 +89,7 @@ fun Similarartists(artistId: String) {
     }
 }
 
-/** Card UI, identical styling & layout to SearchArtistsScreen’s ArtistCard */
+
 @Composable
 fun SimilarArtistCard(similarArtist: SimilarArtist) {
     Card(
@@ -100,7 +100,7 @@ fun SimilarArtistCard(similarArtist: SimilarArtist) {
         shape     = RoundedCornerShape(12.dp)
     ) {
         Box(modifier = Modifier.height(200.dp)) {
-            // thumbnail
+
             val thumbUrl = similarArtist.links?.thumbnail?.href ?: ""
             val painter  = rememberAsyncImagePainter(
                 model        = thumbUrl,
@@ -115,7 +115,7 @@ fun SimilarArtistCard(similarArtist: SimilarArtist) {
                 contentScale      = ContentScale.Crop
             )
 
-            // overlay title bar
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
