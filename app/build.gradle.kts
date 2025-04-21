@@ -41,7 +41,7 @@ android {
         compose = true
     }
 
-    // ✅ THIS LINE IS REQUIRED FOR textFieldColors to work
+
     composeOptions {
         kotlinCompilerExtensionVersion = "2.0.1"
     }
@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 //    implementation(platform(libs.androidx.compose.bom))
+//    implementation("com.github.franmontiel:PersistentCookieJar:v1.0.1")
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
