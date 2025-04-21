@@ -1,3 +1,4 @@
+// Register.kt
 package com.example.artsyapplication.screenviews
 
 import android.util.Patterns
@@ -57,27 +58,25 @@ fun RegisterScreen(
     onCancel:           () -> Unit,
     onLogin:            () -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
-    val topBarBlue    = Color(0xFFbfcdf2)
-
-
-    var fullName      by remember { mutableStateOf("") }
-    var fullNameError by remember { mutableStateOf<String?>(null) }
-    var fullNameTouched by remember { mutableStateOf(false) }
-
-    var email         by remember { mutableStateOf("") }
-    var emailError    by remember { mutableStateOf<String?>(null) }
-    var emailTouched  by remember { mutableStateOf(false) }
-
-    var password      by remember { mutableStateOf("") }
-    var passwordError by remember { mutableStateOf<String?>(null) }
-    var passwordTouched by remember { mutableStateOf(false) }
-
-    var isRegistering by remember { mutableStateOf(false) }
-    var registerError by remember { mutableStateOf<String?>(null) }
-
+    val focusManager      = LocalFocusManager.current
+    val topBarBlue        = Color(0xFFbfcdf2)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope             = rememberCoroutineScope()
+
+    var fullName         by remember { mutableStateOf("") }
+    var fullNameError    by remember { mutableStateOf<String?>(null) }
+    var fullNameTouched  by remember { mutableStateOf(false) }
+
+    var email            by remember { mutableStateOf("") }
+    var emailError       by remember { mutableStateOf<String?>(null) }
+    var emailTouched     by remember { mutableStateOf(false) }
+
+    var password         by remember { mutableStateOf("") }
+    var passwordError    by remember { mutableStateOf<String?>(null) }
+    var passwordTouched  by remember { mutableStateOf(false) }
+
+    var isRegistering    by remember { mutableStateOf(false) }
+    var registerError    by remember { mutableStateOf<String?>(null) }
 
     val formValid = fullName.isNotBlank() &&
             email.isNotBlank() &&
@@ -105,10 +104,10 @@ fun RegisterScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement   = Arrangement.Center,
+            horizontalAlignment   = Alignment.CenterHorizontally
         ) {
-
+            // Full Name field
             OutlinedTextField(
                 value = fullName,
                 onValueChange = {
@@ -143,7 +142,7 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
 
-
+            // Email field
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -161,7 +160,8 @@ fun RegisterScreen(
                         } else if (emailTouched) {
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Invalid format"
+                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+                                    "Invalid format"
                                 else -> null
                             }
                         }
@@ -182,7 +182,7 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
 
-
+            // Password field
             OutlinedTextField(
                 value               = password,
                 onValueChange       = {
@@ -218,7 +218,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(24.dp))
 
-
             Button(
                 onClick = {
                     scope.launch {
@@ -231,8 +230,7 @@ fun RegisterScreen(
                                     .api
                                     .register(RegisterRequest(fullName, email, password))
                                 val text = resp.errorBody()?.string()
-                                    ?: resp.body()?.string()
-                                    ?: ""
+                                    ?: resp.body()?.string().orEmpty()
                                 Pair(resp.code(), text)
                             } catch (e: Exception) {
                                 e.printStackTrace()
@@ -242,16 +240,27 @@ fun RegisterScreen(
 
                         if (code == 200 && body.isNotBlank()) {
                             val obj = JSONObject(body)
-                            val user = LoggedInUser(
-                                _id      = obj.getString("_id"),
-                                fullname = obj.getString("fullname"),
-                                gravatar = obj.getString("gravatar")
-                            )
-                            snackbarHostState.showSnackbar("Registered successfully")
-                            onRegisterSuccess(user)
+                            when {
+                                obj.has("message") -> {
+                                    // Backend returned user‑exists or other error
+                                    registerError = obj.getString("message")
+                                }
+                                obj.has("_id") -> {
+                                    // Successful registration
+                                    val user = LoggedInUser(
+                                        _id      = obj.getString("_id"),
+                                        fullname = obj.getString("fullname"),
+                                        gravatar = obj.getString("gravatar")
+                                    )
+                                    snackbarHostState.showSnackbar("Registered successfully")
+                                    onRegisterSuccess(user)
+                                }
+                                else -> {
+                                    registerError = "Unexpected response from server"
+                                }
+                            }
                         } else {
-                            val msg = JSONObject(body).optString("message", null)
-                            registerError = msg ?: "Registration failed"
+                            registerError = "Network error (code=$code)"
                         }
 
                         isRegistering = false

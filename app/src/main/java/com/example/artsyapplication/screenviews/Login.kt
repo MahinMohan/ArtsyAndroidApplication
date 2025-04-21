@@ -1,3 +1,4 @@
+// Login.kt
 package com.example.artsyapplication.screenviews
 
 import android.util.Patterns
@@ -139,7 +140,6 @@ fun LoginScreen(
 
             Spacer(Modifier.height(16.dp))
 
-
             OutlinedTextField(
                 value               = password,
                 onValueChange       = {
@@ -177,7 +177,6 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-
             Button(
                 onClick = {
                     scope.launch {
@@ -187,7 +186,8 @@ fun LoginScreen(
                         val (code, body) = withContext(Dispatchers.IO) {
                             try {
                                 val resp = LoginClient.api.login(LoginRequest(email, password))
-                                val text = resp.errorBody()?.string() ?: resp.body()?.string() ?: ""
+                                val text = resp.errorBody()?.string()
+                                    ?: resp.body()?.string().orEmpty()
                                 Pair(resp.code(), text)
                             } catch (e: Exception) {
                                 e.printStackTrace()
@@ -197,14 +197,26 @@ fun LoginScreen(
 
                         if (code == 200 && body.isNotBlank()) {
                             val obj = JSONObject(body)
-                            val user = LoggedInUser(
-                                _id      = obj.getString("_id"),
-                                fullname = obj.getString("fullname"),
-                                gravatar = obj.getString("gravatar")
-                            )
-                            onLoginSuccess(user)
+                            when {
+                                obj.has("message") -> {
+                                    // Backend returned an error message
+                                    loginError = obj.getString("message")
+                                }
+                                obj.has("_id") -> {
+                                    // Successful login
+                                    val user = LoggedInUser(
+                                        _id      = obj.getString("_id"),
+                                        fullname = obj.getString("fullname"),
+                                        gravatar = obj.getString("gravatar")
+                                    )
+                                    onLoginSuccess(user)
+                                }
+                                else -> {
+                                    loginError = "Unexpected response from server"
+                                }
+                            }
                         } else {
-                            loginError = "Username or password is incorrect"
+                            loginError = "Network error (code=$code)"
                         }
 
                         isLoggingIn = false
