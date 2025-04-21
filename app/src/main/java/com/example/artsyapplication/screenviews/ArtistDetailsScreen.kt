@@ -5,24 +5,33 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.AccountBox
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.artsyapplication.LoggedInUser
+import com.example.artsyapplication.screenviews.Similarartists
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArtistDetailsScreen(
+    user: LoggedInUser?,        // ← new parameter
     artistId: String,
     artistName: String,
     onBack: () -> Unit
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("Details", "Artworks")
-    // swap in the outlined “i” and framed user icon:
-    val icons = listOf(Icons.Outlined.Info, Icons.Outlined.AccountBox)
+
+    // original two tabs...
+    val baseTabs  = listOf("Details", "Artworks")
+    val baseIcons = listOf(Icons.Outlined.Info, Icons.Outlined.AccountBox)
+
+    // ...and only if logged in append "Similar"
+    val tabs  = if (user != null) baseTabs + "Similar" else baseTabs
+    val icons = if (user != null) baseIcons + Icons.Filled.PersonSearch else baseIcons
 
     val tabBar = @Composable {
         TopAppBar(
@@ -43,9 +52,9 @@ fun ArtistDetailsScreen(
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTabIndex == index,
-                    onClick = { selectedTabIndex = index },
-                    icon = { Icon(icons[index], contentDescription = title) },
-                    text = { Text(title) }
+                    onClick  = { selectedTabIndex = index },
+                    icon     = { Icon(icons[index], contentDescription = title) },
+                    text     = { Text(title) }
                 )
             }
         }
@@ -53,6 +62,7 @@ fun ArtistDetailsScreen(
         when (selectedTabIndex) {
             0 -> ArtistInfo(artistId)
             1 -> Artworks(artistId)
+            2 -> if (user != null) Similarartists(artistId)
         }
     }
 }

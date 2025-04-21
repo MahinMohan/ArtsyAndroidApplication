@@ -30,12 +30,12 @@ import java.time.format.DateTimeFormatter
 fun HomeScreen(
     user: LoggedInUser?,
     onLogin: () -> Unit,
-    onLogout: () -> Unit,                                     // ← new
+    onLogout: () -> Unit,
     onArtistSelected: (artistId: String, artistName: String) -> Unit
 ) {
-    val topBarBlue = Color(0xFFbfcdf2)
-    var isSearching by rememberSaveable { mutableStateOf(false) }
-    var searchText by rememberSaveable { mutableStateOf("") }
+    val topBarBlue   = Color(0xFFbfcdf2)
+    var isSearching  by rememberSaveable { mutableStateOf(false) }
+    var searchText   by rememberSaveable { mutableStateOf("") }
 
     if (isSearching) {
         SearchArtistsScreen(
@@ -80,18 +80,14 @@ fun HomeScreen(
                                     onDismissRequest = { menuExpanded = false }
                                 ) {
                                     DropdownMenuItem(
-                                        text = {
-                                            Text("Log out", color = Color.Blue)
-                                        },
+                                        text = { Text("Log out", color = Color.Blue) },
                                         onClick = {
-                                            onLogout()               // ← clear user & reset UI
+                                            onLogout()
                                             menuExpanded = false
                                         }
                                     )
                                     DropdownMenuItem(
-                                        text = {
-                                            Text("Delete account", color = Color.Red)
-                                        },
+                                        text = { Text("Delete account", color = Color.Red) },
                                         onClick = {
                                             // TODO: wire up delete‑account logic
                                             menuExpanded = false

@@ -46,7 +46,7 @@ fun AppRouter() {
             HomeScreen(
                 user             = currentUser,
                 onLogin          = { navController.navigate("login") },
-                onLogout         = { currentUser = null },       // ← clear user on logout
+                onLogout         = { currentUser = null },
                 onArtistSelected = { id, name ->
                     navController.navigate("artistDetails/$id/$name")
                 }
@@ -81,6 +81,7 @@ fun AppRouter() {
             val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""
             ArtistDetailsScreen(
+                user       = currentUser,
                 artistId   = artistId,
                 artistName = artistName,
                 onBack     = { navController.popBackStack() }
