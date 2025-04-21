@@ -1,4 +1,3 @@
-// Register.kt
 package com.example.artsyapplication.screenviews
 
 import android.util.Patterns
@@ -150,7 +149,7 @@ fun RegisterScreen(
                     if (emailError != null) emailError = null
                 },
                 label      = { Text("Email") },
-                isError    = emailError != null,
+                isError    = emailError != null || (registerError?.contains("email", true) == true),
                 singleLine = true,
                 modifier   = Modifier
                     .fillMaxWidth()
@@ -171,9 +170,19 @@ fun RegisterScreen(
                     onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
                 )
             )
+            // show field‑validation error first
             if (emailTouched && emailError != null) {
                 Text(
                     emailError!!,
+                    color    = MaterialTheme.colorScheme.error,
+                    style    = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
+                )
+            }
+            // then show backend "email already exists" error
+            if (registerError != null && registerError!!.contains("email", true)) {
+                Text(
+                    registerError!!,
                     color    = MaterialTheme.colorScheme.error,
                     style    = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
@@ -279,13 +288,16 @@ fun RegisterScreen(
                 }
             }
 
-            registerError?.let {
-                Text(
-                    it,
-                    color    = MaterialTheme.colorScheme.error,
-                    style    = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+            // only show non-email errors here
+            registerError?.let { msg ->
+                if (!msg.contains("email", true)) {
+                    Text(
+                        msg,
+                        color    = MaterialTheme.colorScheme.error,
+                        style    = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
             }
 
             Spacer(Modifier.height(16.dp))
