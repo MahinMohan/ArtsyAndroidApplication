@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    kotlin("plugin.serialization") version "1.9.0"
 }
 
 android {
@@ -54,7 +53,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 //    implementation(platform(libs.androidx.compose.bom))
 //    implementation("com.github.franmontiel:PersistentCookieJar:v1.0.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
