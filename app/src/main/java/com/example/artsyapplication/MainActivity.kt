@@ -1,4 +1,3 @@
-// MainActivity.kt
 package com.example.artsyapplication
 
 import android.os.Bundle
@@ -15,6 +14,7 @@ import com.example.artsyapplication.screenviews.LoginScreen
 import com.example.artsyapplication.screenviews.RegisterScreen
 import com.example.artsyapplication.screenviews.ArtistDetailsScreen
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
+
 
 data class LoggedInUser(
     val _id: String,
@@ -37,6 +37,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppRouter() {
     val navController = rememberNavController()
+
+
     var currentUser by rememberSaveable { mutableStateOf<LoggedInUser?>(null) }
 
     NavHost(navController = navController, startDestination = "home") {
@@ -79,11 +81,10 @@ fun AppRouter() {
             val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""
             ArtistDetailsScreen(
-                user          = currentUser,
-                artistId      = artistId,
-                artistName    = artistName,
-                navController = navController,
-                onBack        = { navController.popBackStack() }
+                user       = currentUser,
+                artistId   = artistId,
+                artistName = artistName,
+                onBack     = { navController.popBackStack() }
             )
         }
     }

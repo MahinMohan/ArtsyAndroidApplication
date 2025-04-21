@@ -1,12 +1,9 @@
-// Similarartists.kt
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.example.artsyapplication.screenviews
 
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.artsyapplication.R
 import com.example.artsyapplication.screenviews.Links
@@ -30,10 +26,12 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
+
 data class SimilarArtist(
     @SerializedName("name") val name: String?,
     @SerializedName("_links") val links: Links?
 )
+
 
 data class EmbeddedArtists(
     @SerializedName("artists") val artists: List<SimilarArtist>?
@@ -43,10 +41,12 @@ data class SimilarArtistsResponse(
     @SerializedName("_embedded") val embedded: EmbeddedArtists?
 )
 
+
 interface SimilarApiService {
     @GET("api/similarartists")
     suspend fun getSimilarArtists(@Query("id") id: String): Response<SimilarArtistsResponse>
 }
+
 
 object SimilarRetrofitClient {
     private const val BASE_URL = "http://10.0.2.2:3000/"
@@ -60,54 +60,48 @@ object SimilarRetrofitClient {
 }
 
 @Composable
-fun Similarartists(
-    artistId: String,
-    navController: NavController
-) {
+fun Similarartists(artistId: String) {
+
     val similarResults = remember { mutableStateOf<List<SimilarArtist>>(emptyList()) }
+
 
     LaunchedEffect(artistId) {
         try {
             val resp = SimilarRetrofitClient.instance.getSimilarArtists(artistId)
+            println("Similarartists API call for id=$artistId → success=${resp.isSuccessful}, code=${resp.code()}, body=${resp.body()}")
             if (resp.isSuccessful) {
-                similarResults.value = resp.body()?.embedded?.artists.orEmpty()
+                similarResults.value = resp.body()?.embedded?.artists ?: emptyList()
             } else {
+                println("Similarartists API error body: ${resp.errorBody()}")
                 similarResults.value = emptyList()
             }
         } catch (e: Exception) {
+            println("Exception fetching similar artists for id=$artistId: $e")
             similarResults.value = emptyList()
         }
     }
 
+
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(similarResults.value) { artist ->
-            SimilarArtistCard(
-                similarArtist = artist,
-                onClick = {
-                    val targetId = artist.links?.self?.href?.substringAfterLast("/") ?: return@SimilarArtistCard
-                    val encodedName = Uri.encode(artist.name.orEmpty())
-                    navController.navigate("artistDetails/$targetId/$encodedName")
-                }
-            )
+            SimilarArtistCard(artist)
         }
     }
 }
 
+
 @Composable
-fun SimilarArtistCard(
-    similarArtist: SimilarArtist,
-    onClick: () -> Unit
-) {
+fun SimilarArtistCard(similarArtist: SimilarArtist) {
     Card(
-        modifier = Modifier
+        modifier  = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable(onClick = onClick),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape     = RoundedCornerShape(12.dp)
     ) {
         Box(modifier = Modifier.height(200.dp)) {
-            val thumbUrl = similarArtist.links?.thumbnail?.href.orEmpty()
+
+            val thumbUrl = similarArtist.links?.thumbnail?.href ?: ""
             val painter  = rememberAsyncImagePainter(
                 model        = thumbUrl,
                 error        = painterResource(id = R.drawable.artsy_logo),
@@ -115,11 +109,12 @@ fun SimilarArtistCard(
             )
 
             Image(
-                painter            = painter,
-                contentDescription = similarArtist.name.orEmpty(),
-                modifier           = Modifier.fillMaxSize(),
-                contentScale       = ContentScale.Crop
+                painter           = painter,
+                contentDescription = similarArtist.name ?: "",
+                modifier          = Modifier.fillMaxSize(),
+                contentScale      = ContentScale.Crop
             )
+
 
             Row(
                 modifier = Modifier
@@ -132,7 +127,7 @@ fun SimilarArtistCard(
                 horizontalArrangement = Arrangement.Start
             ) {
                 Text(
-                    text  = similarArtist.name.orEmpty(),
+                    text  = similarArtist.name ?: "",
                     style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black)
                 )
             }
