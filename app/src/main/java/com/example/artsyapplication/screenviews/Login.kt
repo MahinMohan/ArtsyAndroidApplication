@@ -1,3 +1,4 @@
+// Login.kt
 package com.example.artsyapplication.screenviews
 
 import android.util.Patterns
@@ -20,10 +21,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.example.artsyapplication.LoggedInUser
+import com.example.artsyapplication.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Response
@@ -43,7 +44,7 @@ object LoginClient {
     val api: LoginApiService by lazy {
         Retrofit.Builder()
             .baseUrl("http://10.0.2.2:3000/")
-            .client(OkHttpClient.Builder().build())
+            .client(MainActivity.getHttpClient())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(LoginApiService::class.java)
@@ -99,7 +100,6 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -133,12 +133,13 @@ fun LoginScreen(
                     it,
                     color    = MaterialTheme.colorScheme.error,
                     style    = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
+                    modifier = Modifier
+                        .align(Alignment.Start)
+                        .padding(top = 4.dp)
                 )
             }
 
             Spacer(Modifier.height(16.dp))
-
 
             OutlinedTextField(
                 value               = password,
@@ -171,12 +172,13 @@ fun LoginScreen(
                     it,
                     color    = MaterialTheme.colorScheme.error,
                     style    = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
+                    modifier = Modifier
+                        .align(Alignment.Start)
+                        .padding(top = 4.dp)
                 )
             }
 
             Spacer(Modifier.height(24.dp))
-
 
             Button(
                 onClick = {

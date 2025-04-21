@@ -1,3 +1,4 @@
+// Register.kt
 package com.example.artsyapplication.screenviews
 
 import android.util.Patterns
@@ -20,10 +21,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.example.artsyapplication.LoggedInUser
+import com.example.artsyapplication.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Response
@@ -43,7 +44,7 @@ object RegisterClient {
     val api: RegisterApiService by lazy {
         Retrofit.Builder()
             .baseUrl("http://10.0.2.2:3000/")
-            .client(OkHttpClient.Builder().build())
+            .client(MainActivity.getHttpClient())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(RegisterApiService::class.java)
@@ -57,27 +58,21 @@ fun RegisterScreen(
     onCancel:           () -> Unit,
     onLogin:            () -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
-    val topBarBlue    = Color(0xFFbfcdf2)
-
-
-    var fullName      by remember { mutableStateOf("") }
-    var fullNameError by remember { mutableStateOf<String?>(null) }
-    var fullNameTouched by remember { mutableStateOf(false) }
-
-    var email         by remember { mutableStateOf("") }
-    var emailError    by remember { mutableStateOf<String?>(null) }
-    var emailTouched  by remember { mutableStateOf(false) }
-
-    var password      by remember { mutableStateOf("") }
-    var passwordError by remember { mutableStateOf<String?>(null) }
-    var passwordTouched by remember { mutableStateOf(false) }
-
-    var isRegistering by remember { mutableStateOf(false) }
-    var registerError by remember { mutableStateOf<String?>(null) }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope             = rememberCoroutineScope()
+    val focusManager       = LocalFocusManager.current
+    val topBarBlue         = Color(0xFFbfcdf2)
+    var fullName           by remember { mutableStateOf("") }
+    var fullNameError      by remember { mutableStateOf<String?>(null) }
+    var fullNameTouched    by remember { mutableStateOf(false) }
+    var email              by remember { mutableStateOf("") }
+    var emailError         by remember { mutableStateOf<String?>(null) }
+    var emailTouched       by remember { mutableStateOf(false) }
+    var password           by remember { mutableStateOf("") }
+    var passwordError      by remember { mutableStateOf<String?>(null) }
+    var passwordTouched    by remember { mutableStateOf(false) }
+    var isRegistering      by remember { mutableStateOf(false) }
+    var registerError      by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState  = remember { SnackbarHostState() }
+    val scope              = rememberCoroutineScope()
 
     val formValid = fullName.isNotBlank() &&
             email.isNotBlank() &&
@@ -108,7 +103,6 @@ fun RegisterScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             OutlinedTextField(
                 value = fullName,
                 onValueChange = {
@@ -142,7 +136,6 @@ fun RegisterScreen(
             }
 
             Spacer(Modifier.height(16.dp))
-
 
             OutlinedTextField(
                 value = email,
@@ -182,7 +175,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
 
-
             OutlinedTextField(
                 value               = password,
                 onValueChange       = {
@@ -218,7 +210,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(24.dp))
 
-
             Button(
                 onClick = {
                     scope.launch {
@@ -247,7 +238,6 @@ fun RegisterScreen(
                                 fullname = obj.getString("fullname"),
                                 gravatar = obj.getString("gravatar")
                             )
-                            snackbarHostState.showSnackbar("Registered successfully")
                             onRegisterSuccess(user)
                         } else {
                             val msg = JSONObject(body).optString("message", null)
