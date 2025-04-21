@@ -20,11 +20,11 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.artsyapplication.R
 import com.example.artsyapplication.screenviews.Links
 import com.google.gson.annotations.SerializedName
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-import retrofit2.Response
 
 // 1. Data model for “similar artists”
 data class SimilarArtist(
@@ -32,13 +32,22 @@ data class SimilarArtist(
     @SerializedName("_links") val links: Links?
 )
 
-// 2. Retrofit interface
+// 2. Wrapper for the embedded artists array
+data class EmbeddedArtists(
+    @SerializedName("artists") val artists: List<SimilarArtist>?
+)
+
+data class SimilarArtistsResponse(
+    @SerializedName("_embedded") val embedded: EmbeddedArtists?
+)
+
+// 3. Retrofit interface
 interface SimilarApiService {
     @GET("api/similarartists")
-    suspend fun getSimilarArtists(@Query("id") id: String): Response<List<SimilarArtist>>
+    suspend fun getSimilarArtists(@Query("id") id: String): Response<SimilarArtistsResponse>
 }
 
-// 3. Retrofit client instance
+// 4. Retrofit client instance
 object SimilarRetrofitClient {
     private const val BASE_URL = "http://10.0.2.2:3000/"
     val instance: SimilarApiService by lazy {
@@ -50,7 +59,6 @@ object SimilarRetrofitClient {
     }
 }
 
-
 @Composable
 fun Similarartists(artistId: String) {
     // hold our API results
@@ -60,8 +68,15 @@ fun Similarartists(artistId: String) {
     LaunchedEffect(artistId) {
         try {
             val resp = SimilarRetrofitClient.instance.getSimilarArtists(artistId)
-            similarResults.value = if (resp.isSuccessful) resp.body()!! else emptyList()
-        } catch (_: Exception) {
+            println("Similarartists API call for id=$artistId → success=${resp.isSuccessful}, code=${resp.code()}, body=${resp.body()}")
+            if (resp.isSuccessful) {
+                similarResults.value = resp.body()?.embedded?.artists ?: emptyList()
+            } else {
+                println("Similarartists API error body: ${resp.errorBody()}")
+                similarResults.value = emptyList()
+            }
+        } catch (e: Exception) {
+            println("Exception fetching similar artists for id=$artistId: $e")
             similarResults.value = emptyList()
         }
     }
@@ -108,7 +123,7 @@ fun SimilarArtistCard(similarArtist: SimilarArtist) {
                     .align(Alignment.BottomStart)
                     .background(Color(0xFFbfcdf2).copy(alpha = 0.85f))
                     .padding(horizontal = 8.dp),
-                verticalAlignment   = Alignment.CenterVertically,
+                verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
                 Text(
