@@ -39,11 +39,18 @@ class ManualCookieJar(context: Context) : CookieJar {
                 if (c.expiresAt >= now &&
                     (c.hostOnly && c.domain == url.host ||
                             !c.hostOnly && url.host.endsWith(c.domain)) &&
-                    url.encodedPath.startsWith(c.path)) {
+                    url.encodedPath.startsWith(c.path)
+                ) {
                     out += c
                 }
             }
         }
         return out
+    }
+
+    /** Clear all cookies from memory and SharedPreferences */
+    fun clear() {
+        cache.clear()
+        prefs.edit().remove("cookies").apply()
     }
 }

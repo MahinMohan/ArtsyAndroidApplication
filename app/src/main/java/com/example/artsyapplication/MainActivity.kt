@@ -1,13 +1,14 @@
 package com.example.artsyapplication
-
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.artsyapplication.network.LogoutClient
 import com.example.artsyapplication.network.Network
 import com.example.artsyapplication.screenviews.ArtistDetailsScreen
 import com.example.artsyapplication.screenviews.HomeScreen
@@ -15,6 +16,7 @@ import com.example.artsyapplication.screenviews.LoginScreen
 import com.example.artsyapplication.screenviews.RegisterScreen
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
 import org.json.JSONObject
@@ -29,7 +31,7 @@ data class LoggedInUser(
     val gravatar: String
 )
 
-// Me endpoint client
+// Me endpoint client (unchanged)
 interface MeApiService {
     @GET("api/me")
     suspend fun me(): Response<ResponseBody>
@@ -38,7 +40,7 @@ interface MeApiService {
 private object MeClient {
     val api: MeApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/") // or 10.0.2.2 if on emulator
+            .baseUrl("http://10.0.2.2:3000/")
             .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -49,7 +51,7 @@ private object MeClient {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // init the shared OkHttpClient with your cookie jar
+        // init the shared OkHttpClient with ManualCookieJar
         Network.init(applicationContext)
         enableEdgeToEdge()
         setContent {
@@ -63,12 +65,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppRouter() {
     val navController = rememberNavController()
+    val scope         = rememberCoroutineScope()
 
-    // your user state and flag
     var currentUser by remember { mutableStateOf<LoggedInUser?>(null) }
     var meChecked   by remember { mutableStateOf(false) }
 
-    // call /api/me on startup
+    // On startup, call /api/me…
     LaunchedEffect(Unit) {
         try {
             val resp = MeClient.api.me()
@@ -80,12 +82,11 @@ fun AppRouter() {
             System.out.println("ME response: code=${resp.code()}, body=$body")
 
             if (resp.code() == 200 && body.isNotBlank()) {
-                val obj = JSONObject(body)
+                val obj     = JSONObject(body)
                 val message = obj.optString("message")
                 if (message == "Access denied no token") {
                     currentUser = null
                 } else {
-                    // authenticated: extract from "user" object
                     val userJson = obj.getJSONObject("user")
                     currentUser = LoggedInUser(
                         _id      = userJson.optString("_id", ""),
@@ -102,7 +103,7 @@ fun AppRouter() {
         }
     }
 
-    // wait until /api/me check completes
+    // Wait until /api/me has completed
     if (!meChecked) return
 
     NavHost(navController = navController, startDestination = "home") {
@@ -110,12 +111,22 @@ fun AppRouter() {
             HomeScreen(
                 user             = currentUser,
                 onLogin          = { navController.navigate("login") },
-                onLogout         = { currentUser = null },
+                onLogout         = {
+                    scope.launch {
+                        // 1) Call DELETE /api/logout
+                        runCatching { LogoutClient.api.logout() }
+                        // 2) Clear stored cookies
+                        Network.cookieJar.clear()
+                        // 3) Update UI
+                        currentUser = null
+                    }
+                },
                 onArtistSelected = { id, name ->
                     navController.navigate("artistDetails/$id/$name")
                 }
             )
         }
+
         composable("login") {
             LoginScreen(
                 onLoginSuccess = { user ->
@@ -126,6 +137,7 @@ fun AppRouter() {
                 onRegister = { navController.navigate("register") }
             )
         }
+
         composable("register") {
             RegisterScreen(
                 onRegisterSuccess = { user ->
@@ -138,6 +150,7 @@ fun AppRouter() {
                 onLogin  = { navController.popBackStack() }
             )
         }
+
         composable("artistDetails/{artistId}/{artistName}") { backStackEntry ->
             val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""
