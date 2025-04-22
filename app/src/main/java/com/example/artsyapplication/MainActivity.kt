@@ -5,16 +5,23 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.artsyapplication.network.Network
+import com.example.artsyapplication.screenviews.ArtistDetailsScreen
 import com.example.artsyapplication.screenviews.HomeScreen
 import com.example.artsyapplication.screenviews.LoginScreen
 import com.example.artsyapplication.screenviews.RegisterScreen
-import com.example.artsyapplication.screenviews.ArtistDetailsScreen
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
+import org.json.JSONObject
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
 
 data class LoggedInUser(
     val _id: String,
@@ -22,9 +29,28 @@ data class LoggedInUser(
     val gravatar: String
 )
 
+// Me endpoint client
+interface MeApiService {
+    @GET("api/me")
+    suspend fun me(): Response<ResponseBody>
+}
+
+private object MeClient {
+    val api: MeApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:3000/") // or 10.0.2.2 if on emulator
+            .client(Network.client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(MeApiService::class.java)
+    }
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // init the shared OkHttpClient with your cookie jar
+        Network.init(applicationContext)
         enableEdgeToEdge()
         setContent {
             ArtsyApplicationTheme {
@@ -38,8 +64,46 @@ class MainActivity : ComponentActivity() {
 fun AppRouter() {
     val navController = rememberNavController()
 
+    // your user state and flag
+    var currentUser by remember { mutableStateOf<LoggedInUser?>(null) }
+    var meChecked   by remember { mutableStateOf(false) }
 
-    var currentUser by rememberSaveable { mutableStateOf<LoggedInUser?>(null) }
+    // call /api/me on startup
+    LaunchedEffect(Unit) {
+        try {
+            val resp = MeClient.api.me()
+            val body = withContext(Dispatchers.IO) {
+                resp.errorBody()?.string()
+                    ?: resp.body()?.string()
+                    ?: ""
+            }
+            System.out.println("ME response: code=${resp.code()}, body=$body")
+
+            if (resp.code() == 200 && body.isNotBlank()) {
+                val obj = JSONObject(body)
+                val message = obj.optString("message")
+                if (message == "Access denied no token") {
+                    currentUser = null
+                } else {
+                    // authenticated: extract from "user" object
+                    val userJson = obj.getJSONObject("user")
+                    currentUser = LoggedInUser(
+                        _id      = userJson.optString("_id", ""),
+                        fullname = userJson.optString("fullname", ""),
+                        gravatar = userJson.optString("gravatar", "")
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            System.out.println("Failed to call /api/me: ${e.message}")
+            e.printStackTrace()
+        } finally {
+            meChecked = true
+        }
+    }
+
+    // wait until /api/me check completes
+    if (!meChecked) return
 
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
@@ -52,7 +116,6 @@ fun AppRouter() {
                 }
             )
         }
-
         composable("login") {
             LoginScreen(
                 onLoginSuccess = { user ->
@@ -63,7 +126,6 @@ fun AppRouter() {
                 onRegister = { navController.navigate("register") }
             )
         }
-
         composable("register") {
             RegisterScreen(
                 onRegisterSuccess = { user ->
@@ -76,7 +138,6 @@ fun AppRouter() {
                 onLogin  = { navController.popBackStack() }
             )
         }
-
         composable("artistDetails/{artistId}/{artistName}") { backStackEntry ->
             val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""

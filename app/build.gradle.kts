@@ -41,7 +41,7 @@ android {
         compose = true
     }
 
-    // ✅ THIS LINE IS REQUIRED FOR textFieldColors to work
+
     composeOptions {
         kotlinCompilerExtensionVersion = "2.0.1"
     }

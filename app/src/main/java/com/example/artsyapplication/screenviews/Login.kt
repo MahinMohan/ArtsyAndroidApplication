@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.example.artsyapplication.LoggedInUser
+import com.example.artsyapplication.network.Network
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,7 +45,8 @@ object LoginClient {
     val api: LoginApiService by lazy {
         Retrofit.Builder()
             .baseUrl("http://10.0.2.2:3000/")
-            .client(OkHttpClient.Builder().build())
+//            .client(OkHttpClient.Builder().build())
+            .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(LoginApiService::class.java)
