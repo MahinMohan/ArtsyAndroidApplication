@@ -31,11 +31,12 @@ fun HomeScreen(
     user: LoggedInUser?,
     onLogin: () -> Unit,
     onLogout: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onArtistSelected: (artistId: String, artistName: String) -> Unit
 ) {
-    val topBarBlue   = Color(0xFFbfcdf2)
-    var isSearching  by rememberSaveable { mutableStateOf(false) }
-    var searchText   by rememberSaveable { mutableStateOf("") }
+    val topBarBlue  = Color(0xFFbfcdf2)
+    var isSearching by rememberSaveable { mutableStateOf(false) }
+    var searchText  by rememberSaveable { mutableStateOf("") }
 
     if (isSearching) {
         SearchArtistsScreen(
@@ -89,7 +90,7 @@ fun HomeScreen(
                                     DropdownMenuItem(
                                         text = { Text("Delete account", color = Color.Red) },
                                         onClick = {
-                                            // TODO: wire up delete‑account logic
+                                            onDeleteAccount()
                                             menuExpanded = false
                                         }
                                     )
@@ -111,7 +112,6 @@ fun HomeScreen(
                     .padding(innerPadding),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Surface(
                     color    = MaterialTheme.colorScheme.background,
                     modifier = Modifier
@@ -127,7 +127,6 @@ fun HomeScreen(
                         textAlign = TextAlign.Start
                     )
                 }
-
 
                 Surface(
                     color    = MaterialTheme.colorScheme.surfaceVariant,

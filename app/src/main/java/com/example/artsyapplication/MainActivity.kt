@@ -1,4 +1,5 @@
 package com.example.artsyapplication
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.artsyapplication.network.DeleteAccountClient
 import com.example.artsyapplication.network.LogoutClient
 import com.example.artsyapplication.network.Network
 import com.example.artsyapplication.screenviews.ArtistDetailsScreen
@@ -15,8 +17,8 @@ import com.example.artsyapplication.screenviews.HomeScreen
 import com.example.artsyapplication.screenviews.LoginScreen
 import com.example.artsyapplication.screenviews.RegisterScreen
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
 import org.json.JSONObject
@@ -51,7 +53,6 @@ private object MeClient {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // init the shared OkHttpClient with ManualCookieJar
         Network.init(applicationContext)
         enableEdgeToEdge()
         setContent {
@@ -84,11 +85,11 @@ fun AppRouter() {
             if (resp.code() == 200 && body.isNotBlank()) {
                 val obj     = JSONObject(body)
                 val message = obj.optString("message")
-                if (message == "Access denied no token") {
-                    currentUser = null
+                currentUser = if (message == "Access denied no token") {
+                    null
                 } else {
                     val userJson = obj.getJSONObject("user")
-                    currentUser = LoggedInUser(
+                    LoggedInUser(
                         _id      = userJson.optString("_id", ""),
                         fullname = userJson.optString("fullname", ""),
                         gravatar = userJson.optString("gravatar", "")
@@ -103,21 +104,24 @@ fun AppRouter() {
         }
     }
 
-    // Wait until /api/me has completed
     if (!meChecked) return
 
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
-                user             = currentUser,
-                onLogin          = { navController.navigate("login") },
-                onLogout         = {
+                user            = currentUser,
+                onLogin         = { navController.navigate("login") },
+                onLogout        = {
                     scope.launch {
-                        // 1) Call DELETE /api/logout
                         runCatching { LogoutClient.api.logout() }
-                        // 2) Clear stored cookies
                         Network.cookieJar.clear()
-                        // 3) Update UI
+                        currentUser = null
+                    }
+                },
+                onDeleteAccount = {
+                    scope.launch {
+                        runCatching { DeleteAccountClient.api.deleteAccount() }
+                        Network.cookieJar.clear()
                         currentUser = null
                     }
                 },
