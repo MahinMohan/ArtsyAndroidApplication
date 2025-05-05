@@ -33,7 +33,6 @@ data class LoggedInUser(
     val gravatar: String
 )
 
-// Me endpoint client (unchanged)
 interface MeApiService {
     @GET("api/me")
     suspend fun me(): Response<ResponseBody>
@@ -71,7 +70,6 @@ fun AppRouter() {
     var currentUser by remember { mutableStateOf<LoggedInUser?>(null) }
     var meChecked   by remember { mutableStateOf(false) }
 
-    // On startup, call /api/me…
     LaunchedEffect(Unit) {
         try {
             val resp = MeClient.api.me()
@@ -97,7 +95,6 @@ fun AppRouter() {
                 }
             }
         } catch (e: Exception) {
-            System.out.println("Failed to call /api/me: ${e.message}")
             e.printStackTrace()
         } finally {
             meChecked = true
@@ -159,10 +156,11 @@ fun AppRouter() {
             val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""
             ArtistDetailsScreen(
-                user       = currentUser,
-                artistId   = artistId,
-                artistName = artistName,
-                onBack     = { navController.popBackStack() }
+                user          = currentUser,
+                artistId      = artistId,
+                artistName    = artistName,
+                navController = navController,             // ← passed here
+                onBack        = { navController.popBackStack() }
             )
         }
     }

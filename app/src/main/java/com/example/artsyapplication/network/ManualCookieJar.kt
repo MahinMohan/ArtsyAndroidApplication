@@ -12,7 +12,7 @@ class ManualCookieJar(context: Context) : CookieJar {
     private val cache = mutableMapOf<String, String>()
 
     init {
-        // load all saved cookies
+
         prefs.getStringSet("cookies", emptySet())!!
             .forEach { line ->
                 val parts = line.split("=", limit = 2)
