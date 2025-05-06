@@ -48,7 +48,7 @@ class ManualCookieJar(context: Context) : CookieJar {
         return out
     }
 
-    /** Clear all cookies from memory and SharedPreferences */
+
     fun clear() {
         cache.clear()
         prefs.edit().remove("cookies").apply()

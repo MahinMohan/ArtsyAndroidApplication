@@ -5,11 +5,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -22,6 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.artsyapplication.LoggedInUser
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -58,11 +61,11 @@ fun HomeScreen(
                     navigationIcon = {},
                     actions        = {
                         IconButton(onClick = { isSearching = true }) {
-                            Icon(imageVector = Icons.Filled.Search, contentDescription = "Search")
+                            Icon(Icons.Filled.Search, contentDescription = "Search")
                         }
                         if (user == null) {
                             IconButton(onClick = onLogin) {
-                                Icon(imageVector = Icons.Filled.Person, contentDescription = "User")
+                                Icon(Icons.Filled.Person, contentDescription = "User")
                             }
                         } else {
                             var menuExpanded by remember { mutableStateOf(false) }
@@ -77,18 +80,18 @@ fun HomeScreen(
                                     )
                                 }
                                 DropdownMenu(
-                                    expanded = menuExpanded,
-                                    onDismissRequest = { menuExpanded = false }
+                                    expanded          = menuExpanded,
+                                    onDismissRequest  = { menuExpanded = false }
                                 ) {
                                     DropdownMenuItem(
-                                        text = { Text("Log out", color = Color.Blue) },
+                                        text    = { Text("Log out", color = Color.Blue) },
                                         onClick = {
                                             onLogout()
                                             menuExpanded = false
                                         }
                                     )
                                     DropdownMenuItem(
-                                        text = { Text("Delete account", color = Color.Red) },
+                                        text    = { Text("Delete account", color = Color.Red) },
                                         onClick = {
                                             onDeleteAccount()
                                             menuExpanded = false
@@ -148,13 +151,49 @@ fun HomeScreen(
 
                 if (user == null) {
                     Button(
-                        onClick        = { onLogin() },
+                        onClick        = onLogin,
                         shape          = RoundedCornerShape(24.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                     ) {
                         Text("Log in to see favorites")
                     }
                     Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // ── Logged‐in: display each favourite ───────────────────────
+                user?.favourites?.forEach { fav ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onArtistSelected(fav.artistId, fav.title) }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text  = fav.title,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = listOfNotNull(
+                                    fav.nationality.takeIf(String::isNotBlank),
+                                    fav.birthyear.takeIf(String::isNotBlank)
+                                ).joinToString(", "),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+
+                        Text(
+                            text  = timeAgo(fav.addedAt),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+
+                        Icon(
+                            imageVector        = Icons.Filled.ArrowForward,
+                            contentDescription = "Go to details",
+                            modifier           = Modifier.padding(start = 8.dp)
+                        )
+                    }
                 }
 
                 Text(
@@ -166,5 +205,17 @@ fun HomeScreen(
                 )
             }
         }
+    }
+}
+
+// ── helper to render “X seconds/minutes/hours/days ago” ──────────────
+private fun timeAgo(iso: String): String {
+    val then = Instant.parse(iso)
+    val diff = Duration.between(then, Instant.now()).seconds
+    return when {
+        diff < 60      -> "$diff seconds ago"
+        diff < 3_600   -> "${diff / 60} minutes ago"
+        diff < 86_400  -> "${diff / 3_600} hours ago"
+        else           -> "${diff / 86_400} days ago"
     }
 }

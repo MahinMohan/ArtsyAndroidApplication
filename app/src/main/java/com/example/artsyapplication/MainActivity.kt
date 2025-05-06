@@ -17,20 +17,31 @@ import com.example.artsyapplication.screenviews.HomeScreen
 import com.example.artsyapplication.screenviews.LoginScreen
 import com.example.artsyapplication.screenviews.RegisterScreen
 import com.example.artsyapplication.ui.theme.ArtsyApplicationTheme
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
+import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 
+// ── models for API /api/me ───────────────────────────────────────────────
+data class Favorite(
+    val artistId:    String,
+    val title:       String,
+    val birthyear:   String,
+    val nationality: String,
+    val addedAt:     String       // ISO timestamp
+)
+
 data class LoggedInUser(
-    val _id: String,
-    val fullname: String,
-    val gravatar: String
+    val _id:        String,
+    val fullname:   String,
+    val gravatar:   String,
+    val favourites: List<Favorite>
 )
 
 interface MeApiService {
@@ -70,27 +81,35 @@ fun AppRouter() {
     var currentUser by remember { mutableStateOf<LoggedInUser?>(null) }
     var meChecked   by remember { mutableStateOf(false) }
 
+    // initial /api/me call
     LaunchedEffect(Unit) {
         try {
             val resp = MeClient.api.me()
             val body = withContext(Dispatchers.IO) {
-                resp.errorBody()?.string()
-                    ?: resp.body()?.string()
-                    ?: ""
+                resp.errorBody()?.string() ?: resp.body()?.string().orEmpty()
             }
-            System.out.println("ME response: code=${resp.code()}, body=$body")
-
             if (resp.code() == 200 && body.isNotBlank()) {
                 val obj     = JSONObject(body)
                 val message = obj.optString("message")
-                currentUser = if (message == "Access denied no token") {
-                    null
-                } else {
+                if (message != "Access denied no token") {
                     val userJson = obj.getJSONObject("user")
-                    LoggedInUser(
-                        _id      = userJson.optString("_id", ""),
-                        fullname = userJson.optString("fullname", ""),
-                        gravatar = userJson.optString("gravatar", "")
+                    val favsJson = userJson.optJSONArray("favourites") ?: JSONArray()
+                    val favsList = mutableListOf<Favorite>()
+                    for (i in 0 until favsJson.length()) {
+                        val f = favsJson.getJSONObject(i)
+                        favsList += Favorite(
+                            artistId    = f.optString("artistId",""),
+                            title       = f.optString("title",""),
+                            birthyear   = f.optString("birthyear",""),
+                            nationality = f.optString("nationality",""),
+                            addedAt     = f.optString("addedAt","")
+                        )
+                    }
+                    currentUser = LoggedInUser(
+                        _id        = userJson.optString("_id",""),
+                        fullname   = userJson.optString("fullname",""),
+                        gravatar   = userJson.optString("gravatar",""),
+                        favourites = favsList
                     )
                 }
             }
@@ -106,16 +125,16 @@ fun AppRouter() {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
-                user            = currentUser,
-                onLogin         = { navController.navigate("login") },
-                onLogout        = {
+                user             = currentUser,
+                onLogin          = { navController.navigate("login") },
+                onLogout         = {
                     scope.launch {
                         runCatching { LogoutClient.api.logout() }
                         Network.cookieJar.clear()
                         currentUser = null
                     }
                 },
-                onDeleteAccount = {
+                onDeleteAccount  = {
                     scope.launch {
                         runCatching { DeleteAccountClient.api.deleteAccount() }
                         Network.cookieJar.clear()
@@ -130,8 +149,41 @@ fun AppRouter() {
 
         composable("login") {
             LoginScreen(
-                onLoginSuccess = { user ->
-                    currentUser = user
+                onLoginSuccess = {
+                    // re-fetch /api/me so favourites come in immediately
+                    scope.launch {
+                        try {
+                            val resp = MeClient.api.me()
+                            val body = withContext(Dispatchers.IO) {
+                                resp.errorBody()?.string() ?: resp.body()?.string().orEmpty()
+                            }
+                            if (resp.code() == 200 && body.isNotBlank()) {
+                                val obj     = JSONObject(body)
+                                val message = obj.optString("message")
+                                if (message != "Access denied no token") {
+                                    val userJson = obj.getJSONObject("user")
+                                    val favsJson = userJson.optJSONArray("favourites") ?: JSONArray()
+                                    val favsList = mutableListOf<Favorite>()
+                                    for (i in 0 until favsJson.length()) {
+                                        val f = favsJson.getJSONObject(i)
+                                        favsList += Favorite(
+                                            artistId    = f.optString("artistId",""),
+                                            title       = f.optString("title",""),
+                                            birthyear   = f.optString("birthyear",""),
+                                            nationality = f.optString("nationality",""),
+                                            addedAt     = f.optString("addedAt","")
+                                        )
+                                    }
+                                    currentUser = LoggedInUser(
+                                        _id        = userJson.optString("_id",""),
+                                        fullname   = userJson.optString("fullname",""),
+                                        gravatar   = userJson.optString("gravatar",""),
+                                        favourites = favsList
+                                    )
+                                }
+                            }
+                        } catch (_: Exception) { /* ignore */ }
+                    }
                     navController.popBackStack()
                 },
                 onCancel   = { navController.popBackStack() },
@@ -141,8 +193,41 @@ fun AppRouter() {
 
         composable("register") {
             RegisterScreen(
-                onRegisterSuccess = { user ->
-                    currentUser = user
+                onRegisterSuccess = {
+                    // re-fetch /api/me so favourites come in immediately
+                    scope.launch {
+                        try {
+                            val resp = MeClient.api.me()
+                            val body = withContext(Dispatchers.IO) {
+                                resp.errorBody()?.string() ?: resp.body()?.string().orEmpty()
+                            }
+                            if (resp.code() == 200 && body.isNotBlank()) {
+                                val obj     = JSONObject(body)
+                                val message = obj.optString("message")
+                                if (message != "Access denied no token") {
+                                    val userJson = obj.getJSONObject("user")
+                                    val favsJson = userJson.optJSONArray("favourites") ?: JSONArray()
+                                    val favsList = mutableListOf<Favorite>()
+                                    for (i in 0 until favsJson.length()) {
+                                        val f = favsJson.getJSONObject(i)
+                                        favsList += Favorite(
+                                            artistId    = f.optString("artistId",""),
+                                            title       = f.optString("title",""),
+                                            birthyear   = f.optString("birthyear",""),
+                                            nationality = f.optString("nationality",""),
+                                            addedAt     = f.optString("addedAt","")
+                                        )
+                                    }
+                                    currentUser = LoggedInUser(
+                                        _id        = userJson.optString("_id",""),
+                                        fullname   = userJson.optString("fullname",""),
+                                        gravatar   = userJson.optString("gravatar",""),
+                                        favourites = favsList
+                                    )
+                                }
+                            }
+                        } catch (_: Exception) { /* ignore */ }
+                    }
                     navController.navigate("home") {
                         popUpTo("home") { inclusive = true }
                     }
@@ -159,7 +244,7 @@ fun AppRouter() {
                 user          = currentUser,
                 artistId      = artistId,
                 artistName    = artistName,
-                navController = navController,             // ← passed here
+                navController = navController,
                 onBack        = { navController.popBackStack() }
             )
         }

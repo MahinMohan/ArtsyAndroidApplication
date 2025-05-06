@@ -32,6 +32,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
+import com.example.artsyapplication.Favorite
 
 data class RegisterRequest(val fullname: String, val email: String, val password: String)
 
@@ -261,7 +262,8 @@ fun RegisterScreen(
                                     val user = LoggedInUser(
                                         _id      = obj.getString("_id"),
                                         fullname = obj.getString("fullname"),
-                                        gravatar = obj.getString("gravatar")
+                                        gravatar = obj.getString("gravatar"),
+                                        favourites = emptyList()
                                     )
                                     snackbarHostState.showSnackbar("Registered successfully")
                                     onRegisterSuccess(user)
