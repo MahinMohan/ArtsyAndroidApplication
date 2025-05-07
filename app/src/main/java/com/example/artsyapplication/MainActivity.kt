@@ -1,3 +1,4 @@
+// MainActivity.kt
 package com.example.artsyapplication
 
 import android.os.Bundle
@@ -35,7 +36,7 @@ data class Favorite(
     val title:       String,
     val birthyear:   String,
     val nationality: String,
-    val addedAt:     String       // ISO timestamp
+    val addedAt:     String // ISO timestamp
 )
 
 data class LoggedInUser(
@@ -126,32 +127,35 @@ fun AppRouter() {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
-                user             = currentUser,
-                onLogin          = { navController.navigate("login") },
-                onLogout         = {
+                user               = currentUser,
+                onLogin            = { navController.navigate("login") },
+                onLogout           = {
                     scope.launch {
                         runCatching { LogoutClient.api.logout() }
                         Network.cookieJar.clear()
                         currentUser = null
                     }
                 },
-                onDeleteAccount  = {
+                onDeleteAccount    = {
                     scope.launch {
                         runCatching { DeleteAccountClient.api.deleteAccount() }
                         Network.cookieJar.clear()
                         currentUser = null
                     }
                 },
-                onArtistSelected = { id, name ->
+                onArtistSelected   = { id, name ->
                     val encodedName = Uri.encode(name)
                     navController.navigate("artistDetails/$id/$encodedName")
                 },
-                onFavoriteAdded  = { fav ->
-                    currentUser?.let { user ->
-                        currentUser = user.copy(
-                            favourites = user.favourites + fav
-                        )
-                    }
+                onFavoriteAdded    = { fav ->
+                    currentUser = currentUser?.copy(
+                        favourites = currentUser!!.favourites + fav
+                    )
+                },
+                onFavoriteRemoved  = { artistId ->
+                    currentUser = currentUser?.copy(
+                        favourites = currentUser!!.favourites.filterNot { it.artistId == artistId }
+                    )
                 }
             )
         }
@@ -190,7 +194,7 @@ fun AppRouter() {
                                     )
                                 }
                             }
-                        } catch (_: Exception) { /* ignore */ }
+                        } catch (_: Exception) { }
                     }
                     navController.popBackStack()
                 },
@@ -233,7 +237,7 @@ fun AppRouter() {
                                     )
                                 }
                             }
-                        } catch (_: Exception) { /* ignore */ }
+                        } catch (_: Exception) { }
                     }
                     navController.navigate("home") {
                         popUpTo("home") { inclusive = true }
@@ -248,17 +252,20 @@ fun AppRouter() {
             val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""
             ArtistDetailsScreen(
-                user             = currentUser,
-                artistId         = artistId,
-                artistName       = artistName,
-                navController    = navController,
-                onBack           = { navController.popBackStack() },
-                onFavoriteAdded  = { fav ->
-                    currentUser?.let { user ->
-                        currentUser = user.copy(
-                            favourites = user.favourites + fav
-                        )
-                    }
+                user               = currentUser,
+                artistId           = artistId,
+                artistName         = artistName,
+                navController      = navController,
+                onBack             = { navController.popBackStack() },
+                onFavoriteAdded    = { fav ->
+                    currentUser = currentUser?.copy(
+                        favourites = currentUser!!.favourites + fav
+                    )
+                },
+                onFavoriteRemoved  = { id ->
+                    currentUser = currentUser?.copy(
+                        favourites = currentUser!!.favourites.filterNot { it.artistId == id }
+                    )
                 }
             )
         }

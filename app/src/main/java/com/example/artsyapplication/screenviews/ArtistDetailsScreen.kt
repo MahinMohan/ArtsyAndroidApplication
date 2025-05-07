@@ -25,6 +25,8 @@ import com.example.artsyapplication.Favorite
 import com.example.artsyapplication.LoggedInUser
 import com.example.artsyapplication.network.AddFavouriteRequest
 import com.example.artsyapplication.network.ArtistDataClient
+import com.example.artsyapplication.network.DeleteFavouritesClient
+import com.example.artsyapplication.network.DeleteFavouriteRequest
 import com.example.artsyapplication.network.FavouritesClient
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -32,12 +34,13 @@ import java.time.Instant
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArtistDetailsScreen(
-    user            : LoggedInUser?,
-    artistId        : String,
-    artistName      : String,
-    navController   : NavController,
-    onBack          : () -> Unit,
-    onFavoriteAdded : (Favorite) -> Unit
+    user               : LoggedInUser?,
+    artistId           : String,
+    artistName         : String,
+    navController      : NavController,
+    onBack             : () -> Unit,
+    onFavoriteAdded    : (Favorite) -> Unit,
+    onFavoriteRemoved  : (String) -> Unit      // newly added callback
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
     val coroutineScope   = rememberCoroutineScope()
@@ -60,28 +63,41 @@ fun ArtistDetailsScreen(
                     val isFav = user.favourites.any { it.artistId == artistId }
                     IconButton(onClick = {
                         coroutineScope.launch {
-                            val resp = ArtistDataClient.api.getArtistData(artistId)
-                            if (!resp.isSuccessful) return@launch
-                            val data = resp.body()!!
-                            FavouritesClient.api.addToFavorites(
-                                AddFavouriteRequest(
-                                    artistId    = data.id,
-                                    title       = data.name,
-                                    birthyear   = data.birthday,
-                                    deathyear   = data.deathday,
-                                    nationality = data.nationality,
-                                    image       = ""
+                            if (isFav) {
+                                // —— remove from favourites ——
+                                try {
+                                    DeleteFavouritesClient
+                                        .api
+                                        .deleteFavourite(DeleteFavouriteRequest(id = artistId))
+                                    onFavoriteRemoved(artistId)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            } else {
+                                // —— add to favourites ——
+                                val resp = ArtistDataClient.api.getArtistData(artistId)
+                                if (!resp.isSuccessful) return@launch
+                                val data = resp.body()!!
+                                FavouritesClient.api.addToFavorites(
+                                    AddFavouriteRequest(
+                                        artistId    = data.id,
+                                        title       = data.name,
+                                        birthyear   = data.birthday,
+                                        deathyear   = data.deathday,
+                                        nationality = data.nationality,
+                                        image       = ""
+                                    )
                                 )
-                            )
-                            onFavoriteAdded(
-                                Favorite(
-                                    artistId    = data.id,
-                                    title       = data.name,
-                                    birthyear   = data.birthday,
-                                    nationality = data.nationality,
-                                    addedAt     = Instant.now().toString()
+                                onFavoriteAdded(
+                                    Favorite(
+                                        artistId    = data.id,
+                                        title       = data.name,
+                                        birthyear   = data.birthday,
+                                        nationality = data.nationality,
+                                        addedAt     = Instant.now().toString()
+                                    )
                                 )
-                            )
+                            }
                         }
                     }) {
                         Icon(
@@ -114,10 +130,11 @@ fun ArtistDetailsScreen(
             0 -> ArtistInfo(artistId)
             1 -> Artworks(artistId)
             2 -> if (user != null) Similarartists(
-                artistId        = artistId,
-                navController   = navController,
-                user            = user,
-                onFavoriteAdded = onFavoriteAdded
+                artistId           = artistId,
+                navController      = navController,
+                user               = user,
+                onFavoriteAdded    = onFavoriteAdded,
+                onFavoriteRemoved  = onFavoriteRemoved   // pass down removal callback
             )
         }
     }

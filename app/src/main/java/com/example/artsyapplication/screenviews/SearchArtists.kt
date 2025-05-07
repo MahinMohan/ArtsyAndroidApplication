@@ -1,5 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 package com.example.artsyapplication.screenviews
 
 import androidx.compose.foundation.Image
@@ -28,7 +27,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -46,6 +44,8 @@ import com.example.artsyapplication.LoggedInUser
 import com.example.artsyapplication.R
 import com.example.artsyapplication.network.AddFavouriteRequest
 import com.example.artsyapplication.network.ArtistDataClient
+import com.example.artsyapplication.network.DeleteFavouritesClient
+import com.example.artsyapplication.network.DeleteFavouriteRequest
 import com.example.artsyapplication.network.FavouritesClient
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.launch
@@ -105,7 +105,8 @@ fun SearchArtistsScreen(
     onCancelSearch     : () -> Unit,
     onArtistSelected   : (String, String) -> Unit,
     user               : LoggedInUser?,
-    onFavoriteAdded    : (Favorite) -> Unit
+    onFavoriteAdded    : (Favorite) -> Unit,
+    onFavoriteRemoved  : (String) -> Unit
 ) {
     val topBarBlue     = Color(0xFFbfcdf2)
     val searchResults  = remember { mutableStateOf<List<Artist>>(emptyList()) }
@@ -120,7 +121,7 @@ fun SearchArtistsScreen(
                 } else {
                     emptyList()
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 searchResults.value = emptyList()
             }
         } else {
@@ -173,48 +174,57 @@ fun SearchArtistsScreen(
                 .padding(innerPadding)
         ) {
             items(searchResults.value) { artist ->
+                val artistId = artist.links?.self?.href?.substringAfterLast("/") ?: ""
+                val isFav    = user?.favourites?.any { it.artistId == artistId } == true
+
                 ArtistCard(
                     artist           = artist,
                     onDetailsClick   = {
-                        val id   = artist.links?.self?.href?.substringAfterLast("/") ?: return@ArtistCard
-                        val name = artist.title ?: "Unknown"
-                        onArtistSelected(id, name)
+                        if (artistId.isNotEmpty()) onArtistSelected(artistId, artist.title ?: "Unknown")
                     },
-                    user              = user,
+                    user             = user,
                     onAddToFavorites = {
                         if (user != null) {
                             coroutineScope.launch {
-                                try {
-                                    // 1️⃣ fetch full artist data
-                                    val id   = artist.links?.self?.href
-                                        ?.substringAfterLast("/") ?: return@launch
-                                    val resp = ArtistDataClient.api.getArtistData(id)
-                                    if (!resp.isSuccessful) return@launch
-                                    val data = resp.body()!!
+                                if (isFav) {
+                                    // remove from favourites
+                                    try {
+                                        DeleteFavouritesClient
+                                            .api
+                                            .deleteFavourite(DeleteFavouriteRequest(id = artistId))
+                                        onFavoriteRemoved(artistId)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                } else {
+                                    // existing add-to-favourites flow
+                                    try {
+                                        val resp = ArtistDataClient.api.getArtistData(artistId)
+                                        if (!resp.isSuccessful) return@launch
+                                        val data = resp.body()!!
 
-                                    // 2️⃣ POST to favourites
-                                    FavouritesClient.api.addToFavorites(
-                                        AddFavouriteRequest(
+                                        FavouritesClient.api.addToFavorites(
+                                            AddFavouriteRequest(
+                                                artistId    = data.id,
+                                                title       = data.name,
+                                                birthyear   = data.birthday,
+                                                deathyear   = data.deathday,
+                                                nationality = data.nationality,
+                                                image       = artist.links?.thumbnail?.href.orEmpty()
+                                            )
+                                        )
+
+                                        val newFav = Favorite(
                                             artistId    = data.id,
                                             title       = data.name,
                                             birthyear   = data.birthday,
-                                            deathyear   = data.deathday,
                                             nationality = data.nationality,
-                                            image       = artist.links?.thumbnail?.href.orEmpty()
+                                            addedAt     = Instant.now().toString()
                                         )
-                                    )
-
-                                    // 3️⃣ notify global state
-                                    val newFav = Favorite(
-                                        artistId    = data.id,
-                                        title       = data.name,
-                                        birthyear   = data.birthday,
-                                        nationality = data.nationality,
-                                        addedAt     = Instant.now().toString()
-                                    )
-                                    onFavoriteAdded(newFav)
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
+                                        onFavoriteAdded(newFav)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
                                 }
                             }
                         }
@@ -248,10 +258,10 @@ fun ArtistCard(
             )
 
             Image(
-                painter           = painter,
-                contentDescription= "Artist Image",
-                modifier          = Modifier.fillMaxSize(),
-                contentScale      = ContentScale.Crop
+                painter            = painter,
+                contentDescription = "Artist Image",
+                modifier           = Modifier.fillMaxSize(),
+                contentScale       = ContentScale.Crop
             )
 
             if (user != null) {

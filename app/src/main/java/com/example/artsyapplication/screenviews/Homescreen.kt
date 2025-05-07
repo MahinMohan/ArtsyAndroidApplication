@@ -1,3 +1,4 @@
+// HomeScreen.kt
 package com.example.artsyapplication.screenviews
 
 import androidx.compose.foundation.Image
@@ -33,12 +34,13 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    user             : LoggedInUser?,
-    onLogin          : () -> Unit,
-    onLogout         : () -> Unit,
-    onDeleteAccount  : () -> Unit,
-    onArtistSelected : (artistId: String, artistName: String) -> Unit,
-    onFavoriteAdded  : (Favorite) -> Unit
+    user               : LoggedInUser?,
+    onLogin            : () -> Unit,
+    onLogout           : () -> Unit,
+    onDeleteAccount    : () -> Unit,
+    onArtistSelected   : (artistId: String, artistName: String) -> Unit,
+    onFavoriteAdded    : (Favorite) -> Unit,
+    onFavoriteRemoved  : (String) -> Unit
 ) {
     val topBarBlue  = Color(0xFFbfcdf2)
     var isSearching by rememberSaveable { mutableStateOf(false) }
@@ -54,7 +56,8 @@ fun HomeScreen(
             },
             onArtistSelected   = onArtistSelected,
             user               = user,
-            onFavoriteAdded    = onFavoriteAdded
+            onFavoriteAdded    = onFavoriteAdded,
+            onFavoriteRemoved  = onFavoriteRemoved
         )
     } else {
         Scaffold(
@@ -114,7 +117,6 @@ fun HomeScreen(
                 LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
             }
 
-            // live clock state
             var now by remember { mutableStateOf(Instant.now()) }
             LaunchedEffect(Unit) {
                 while (true) {
@@ -174,7 +176,6 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // ── Logged‐in: display each favourite ───────────────────────
                 user?.favourites?.forEach { fav ->
                     Row(
                         modifier = Modifier
@@ -222,7 +223,6 @@ fun HomeScreen(
     }
 }
 
-// ── helper to render “X seconds/minutes/hours/days ago” ──────────────
 private fun timeAgo(iso: String, now: Instant): String {
     val then = Instant.parse(iso)
     val diff = Duration.between(then, now).seconds

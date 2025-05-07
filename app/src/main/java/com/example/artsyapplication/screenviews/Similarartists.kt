@@ -11,19 +11,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.artsyapplication.Favorite
@@ -31,6 +38,8 @@ import com.example.artsyapplication.LoggedInUser
 import com.example.artsyapplication.R
 import com.example.artsyapplication.network.AddFavouriteRequest
 import com.example.artsyapplication.network.ArtistDataClient
+import com.example.artsyapplication.network.DeleteFavouritesClient
+import com.example.artsyapplication.network.DeleteFavouriteRequest
 import com.example.artsyapplication.network.FavouritesClient
 import com.example.artsyapplication.screenviews.Links
 import com.google.gson.annotations.SerializedName
@@ -42,7 +51,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// ── models for your similar‐artists API ────────────────────────────────
+// ── model defs ──────────────────────────────────────────────────────────
 data class SimilarArtist(
     @SerializedName("name")   val name:  String?,
     @SerializedName("_links") val links: Links?
@@ -74,73 +83,77 @@ object SimilarRetrofitClient {
 
 @Composable
 fun Similarartists(
-    artistId: String,
-    navController: NavController,
-    user: LoggedInUser?,
-    onFavoriteAdded: (Favorite) -> Unit
+    artistId           : String,
+    navController      : NavController,
+    user               : LoggedInUser?,
+    onFavoriteAdded    : (Favorite) -> Unit,
+    onFavoriteRemoved  : (String) -> Unit
 ) {
-    val similarResults  = remember { mutableStateOf<List<SimilarArtist>>(emptyList()) }
-    val coroutineScope  = rememberCoroutineScope()
+    val similarResults = remember { mutableStateOf<List<SimilarArtist>>(emptyList()) }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(artistId) {
         try {
             val resp = SimilarRetrofitClient.instance.getSimilarArtists(artistId)
-            similarResults.value = if (resp.isSuccessful) {
-                resp.body()?.embedded?.artists ?: emptyList()
-            } else emptyList()
-        } catch (e: Exception) {
+            similarResults.value =
+                if (resp.isSuccessful) resp.body()?.embedded?.artists.orEmpty()
+                else emptyList()
+        } catch (_: Exception) {
             similarResults.value = emptyList()
         }
     }
 
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(similarResults.value) { artist ->
-            val href = artist.links?.self?.href.orEmpty()
-            val id   = href.substringAfterLast("/")
-            val name = artist.name.orEmpty()
+            val href  = artist.links?.self?.href.orEmpty()
+            val id    = href.substringAfterLast("/")
+            val name  = artist.name.orEmpty()
+            val isFav = user?.favourites?.any { it.artistId == id } == true
 
             SimilarArtistCard(
                 similarArtist    = artist,
-                onClick          = {
-                    navController.navigate("artistDetails/$id/${Uri.encode(name)}")
-                },
+                onClick          = { navController.navigate("artistDetails/$id/${Uri.encode(name)}") },
                 user             = user,
-                onAddToFavorites = {
-                    if (user != null) {
-                        coroutineScope.launch {
+                onAddOrRemove    = {
+                    coroutineScope.launch {
+                        if (isFav) {
+                            // —— remove
                             try {
-                                // 1️⃣ fetch full artist data
-                                val resp = ArtistDataClient.api.getArtistData(id)
-                                if (!resp.isSuccessful) return@launch
-                                val data = resp.body()!!
-
-                                // 2️⃣ POST to favourites
-                                FavouritesClient.api.addToFavorites(
-                                    AddFavouriteRequest(
-                                        artistId    = data.id,
-                                        title       = data.name,
-                                        birthyear   = data.birthday,
-                                        deathyear   = data.deathday,
-                                        nationality = data.nationality,
-                                        image       = artist.links?.thumbnail?.href.orEmpty()
-                                    )
+                                DeleteFavouritesClient
+                                    .api
+                                    .deleteFavourite(DeleteFavouriteRequest(id = id))
+                                onFavoriteRemoved(id)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        } else {
+                            // —— add
+                            val resp2 = ArtistDataClient.api.getArtistData(id)
+                            if (!resp2.isSuccessful) return@launch
+                            val data = resp2.body()!!
+                            FavouritesClient.api.addToFavorites(
+                                AddFavouriteRequest(
+                                    artistId    = data.id,
+                                    title       = data.name,
+                                    birthyear   = data.birthday,
+                                    deathyear   = data.deathday,
+                                    nationality = data.nationality,
+                                    image       = artist.links?.thumbnail?.href.orEmpty()
                                 )
-
-                                // 3️⃣ update global state
-                                val newFav = Favorite(
+                            )
+                            onFavoriteAdded(
+                                Favorite(
                                     artistId    = data.id,
                                     title       = data.name,
                                     birthyear   = data.birthday,
                                     nationality = data.nationality,
                                     addedAt     = Instant.now().toString()
                                 )
-                                onFavoriteAdded(newFav)
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
+                            )
                         }
                     }
-                }
+                },
+                isFav            = isFav
             )
         }
     }
@@ -148,10 +161,11 @@ fun Similarartists(
 
 @Composable
 fun SimilarArtistCard(
-    similarArtist: SimilarArtist,
-    onClick: () -> Unit,
-    user: LoggedInUser?,
-    onAddToFavorites: () -> Unit
+    similarArtist : SimilarArtist,
+    onClick       : () -> Unit,
+    user          : LoggedInUser?,
+    onAddOrRemove : () -> Unit,
+    isFav         : Boolean
 ) {
     Card(
         modifier  = Modifier
@@ -162,7 +176,7 @@ fun SimilarArtistCard(
         shape     = RoundedCornerShape(12.dp)
     ) {
         Box(modifier = Modifier.height(200.dp)) {
-            val thumbUrl = similarArtist.links?.thumbnail?.href ?: ""
+            val thumbUrl = similarArtist.links?.thumbnail?.href.orEmpty()
             val painter  = rememberAsyncImagePainter(
                 model        = thumbUrl,
                 error        = painterResource(id = R.drawable.artsy_logo),
@@ -170,10 +184,10 @@ fun SimilarArtistCard(
             )
 
             Image(
-                painter           = painter,
-                contentDescription= similarArtist.name ?: "",
-                modifier          = Modifier.fillMaxSize(),
-                contentScale      = ContentScale.Crop
+                painter            = painter,
+                contentDescription = similarArtist.name ?: "",
+                modifier           = Modifier.fillMaxSize(),
+                contentScale       = ContentScale.Crop
             )
 
             Icon(
@@ -186,12 +200,8 @@ fun SimilarArtistCard(
             )
 
             if (user != null) {
-                val artistId = similarArtist.links?.self?.href
-                    ?.substringAfterLast("/") ?: ""
-                val isFav = user.favourites.any { it.artistId == artistId }
-
                 IconButton(
-                    onClick  = onAddToFavorites,
+                    onClick  = onAddOrRemove,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
@@ -201,8 +211,7 @@ fun SimilarArtistCard(
                     Icon(
                         imageVector        = if (isFav) Icons.Filled.Star else Icons.Filled.StarBorder,
                         tint               = if (isFav) Color.Black else Color.Gray,
-                        contentDescription = if (isFav)
-                            "Remove from favorites" else "Add to favorites"
+                        contentDescription = if (isFav) "Remove from favorites" else "Add to favorites"
                     )
                 }
             }

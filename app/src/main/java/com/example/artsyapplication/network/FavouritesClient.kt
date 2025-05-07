@@ -6,9 +6,10 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.HTTP
 import retrofit2.http.POST
 
-// ── exactly these fields, in this order ────────────────────────────────
+// ── your existing add‐to‐favourites code unchanged ────────────────────────
 data class AddFavouriteRequest(
     @SerializedName("artistId")    val artistId:    String,
     @SerializedName("title")       val title:       String,
@@ -33,5 +34,30 @@ object FavouritesClient {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(FavouritesApiService::class.java)
+    }
+}
+
+// ── delete‐from‐favourites support ──────────────────────────────────────
+
+// <<-- changed this field name to "id" to match server-side req.body.id
+data class DeleteFavouriteRequest(
+    @SerializedName("id") val id: String
+)
+
+interface DeleteFavouritesApiService {
+    @HTTP(method = "DELETE", path = "api/deletefavourites", hasBody = true)
+    suspend fun deleteFavourite(
+        @Body request: DeleteFavouriteRequest
+    ): Response<ResponseBody>
+}
+
+object DeleteFavouritesClient {
+    val api: DeleteFavouritesApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:3000/")
+            .client(Network.client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(DeleteFavouritesApiService::class.java)
     }
 }
