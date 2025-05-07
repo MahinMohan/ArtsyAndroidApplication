@@ -1,5 +1,6 @@
 package com.example.artsyapplication.screenviews
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -42,6 +43,10 @@ fun ArtistDetailsScreen(
     onFavoriteAdded    : (Favorite) -> Unit,
     onFavoriteRemoved  : (String) -> Unit
 ) {
+    // only change: dynamic top bar color based on dark theme
+    val isDarkTheme = isSystemInDarkTheme()
+    val topBarColor = if (isDarkTheme) Color(0xFF223D6B) else Color(0xFFbfcdf2)
+
     var selectedTabIndex by remember { mutableStateOf(0) }
     val coroutineScope   = rememberCoroutineScope()
 
@@ -64,7 +69,6 @@ fun ArtistDetailsScreen(
                     IconButton(onClick = {
                         coroutineScope.launch {
                             if (isFav) {
-
                                 try {
                                     DeleteFavouritesClient
                                         .api
@@ -74,7 +78,6 @@ fun ArtistDetailsScreen(
                                     e.printStackTrace()
                                 }
                             } else {
-
                                 val resp = ArtistDataClient.api.getArtistData(artistId)
                                 if (!resp.isSuccessful) return@launch
                                 val data = resp.body()!!
@@ -108,7 +111,7 @@ fun ArtistDetailsScreen(
                     }
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFbfcdf2))
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
         )
     }
 

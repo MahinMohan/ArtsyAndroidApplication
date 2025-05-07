@@ -1,20 +1,26 @@
+// ArtistInfo.kt
 package com.example.artsyapplication.screenviews
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import retrofit2.http.GET
-import retrofit2.http.Query
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.Response
+import retrofit2.http.GET
+import retrofit2.http.Query
 
 data class ArtistDetails(
     val name: String,
@@ -42,6 +48,7 @@ object ArtistApiClient {
 
 @Composable
 fun ArtistInfo(artistId: String) {
+    val isDarkTheme = isSystemInDarkTheme()
     var artist by remember { mutableStateOf<ArtistDetails?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -66,38 +73,42 @@ fun ArtistInfo(artistId: String) {
         ) {
             CircularProgressIndicator()
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Loading...")
+            Text("Loading...", color = if (isDarkTheme) Color.White else Color.Black)
         }
     } else {
         artist?.let {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(if (isDarkTheme) Color.Black else Color.Transparent)
                     .padding(horizontal = 16.dp, vertical = 12.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = it.name,
+                    color = if (isDarkTheme) Color.White else Color.Black,
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "${it.nationality}, ${it.birthday} - ${it.deathday}",
+                    color = if (isDarkTheme) Color.White else Color.Black,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = it.biography,
+                    color = if (isDarkTheme) Color.White else Color.Black,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Justify
                 )
                 Spacer(modifier = Modifier.height(32.dp))
             }
         } ?: Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No artist info found.")
+            Text("No artist info found.", color = if (isDarkTheme) Color.White else Color.Black)
         }
     }
 }

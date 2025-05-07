@@ -4,6 +4,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
@@ -23,7 +25,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-
 data class GenesResponse(
     @SerializedName("_embedded") val embedded: EmbeddedGenes
 )
@@ -31,11 +32,10 @@ data class EmbeddedGenes(
     @SerializedName("genes") val genes: List<CategoryData>
 )
 data class CategoryData(
-    @SerializedName("name") val name: String,
+    @SerializedName("name")        val name:        String,
     @SerializedName("description") val description: String?,
-    @SerializedName("_links") val links: Links?
+    @SerializedName("_links")      val links:       Links?
 )
-
 
 private interface GenesApiService {
     @GET("api/genesdata")
@@ -49,17 +49,14 @@ private val genesService: GenesApiService by lazy {
         .create(GenesApiService::class.java)
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Categories(
     artworkId: String,
     onDismiss: () -> Unit
 ) {
-
     var isLoading by remember { mutableStateOf(true) }
-    var index by remember { mutableStateOf(0) }
-
+    var index     by remember { mutableStateOf(0) }
 
     val genes by produceState<List<CategoryData>>(initialValue = emptyList(), artworkId) {
         isLoading = true
@@ -76,9 +73,9 @@ fun Categories(
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(24.dp),
+            shape          = RoundedCornerShape(24.dp),
             tonalElevation = 8.dp,
-            modifier = Modifier
+            modifier       = Modifier
                 .fillMaxWidth(0.95f)
                 .wrapContentHeight()
         ) {
@@ -89,7 +86,6 @@ fun Categories(
                 Text("Categories", style = MaterialTheme.typography.headlineSmall)
 
                 when {
-
                     isLoading -> {
                         Box(
                             Modifier
@@ -100,7 +96,6 @@ fun Categories(
                             Text("Loading…", style = MaterialTheme.typography.bodyMedium)
                         }
                     }
-
                     genes.isEmpty() -> {
                         Box(
                             Modifier
@@ -111,7 +106,6 @@ fun Categories(
                             Text("No categories available", style = MaterialTheme.typography.bodyMedium)
                         }
                     }
-
                     else -> {
                         Box(
                             Modifier
@@ -153,11 +147,20 @@ fun Categories(
                                         modifier = Modifier.align(Alignment.CenterHorizontally)
                                     )
                                     Spacer(Modifier.height(4.dp))
-                                    Text(
-                                        genes[index].description.orEmpty(),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier.padding(horizontal = 12.dp)
-                                    )
+                                    // Make description scrollable
+                                    val scroll = rememberScrollState()
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .weight(1f)
+                                            .verticalScroll(scroll)
+                                            .padding(horizontal = 12.dp)
+                                    ) {
+                                        Text(
+                                            genes[index].description.orEmpty(),
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
                                 }
                             }
 

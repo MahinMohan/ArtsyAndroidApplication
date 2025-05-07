@@ -1,8 +1,8 @@
 package com.example.artsyapplication.screenviews
 
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,8 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.artsyapplication.R
@@ -22,10 +26,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.layout.aspectRatio
-
 
 data class ArtworksResponse(
     @SerializedName("_embedded") val embedded: EmbeddedArtworks
@@ -35,14 +35,12 @@ data class EmbeddedArtworks(
     @SerializedName("artworks") val artworks: List<ArtworkData>
 )
 
-
 data class ArtworkData(
     @SerializedName("id") val id: String?,
     @SerializedName("title") val title: String?,
     @SerializedName("date") val date: String?,
     @SerializedName("_links") val links: Links?
 )
-
 
 private interface ArtworksApiService {
     @GET("api/artworksdata")
@@ -59,6 +57,7 @@ private val artworksService: ArtworksApiService by lazy {
 
 @Composable
 fun Artworks(artistId: String) {
+    val isDarkTheme = isSystemInDarkTheme()
 
     var showCategories by remember { mutableStateOf(false) }
     var selectedArtworkId by remember { mutableStateOf<String?>(null) }
@@ -118,6 +117,7 @@ fun Artworks(artistId: String) {
                 LazyColumn(
                     Modifier
                         .fillMaxSize()
+                        .background(if (isDarkTheme) Color.Black else Color.Transparent)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -127,14 +127,14 @@ fun Artworks(artistId: String) {
                             onViewCategories = { id ->
                                 selectedArtworkId = id
                                 showCategories = true
-                            }
+                            },
+                            isDarkTheme = isDarkTheme
                         )
                     }
                 }
             }
         }
     }
-
 
     if (showCategories && selectedArtworkId != null) {
         Categories(
@@ -148,7 +148,8 @@ fun Artworks(artistId: String) {
 @Composable
 private fun ArtworkCard(
     artwork: ArtworkData,
-    onViewCategories: (String) -> Unit
+    onViewCategories: (String) -> Unit,
+    isDarkTheme: Boolean
 ) {
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -156,10 +157,8 @@ private fun ArtworkCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-
-            val thumbUrl = artwork.links?.thumbnail?.href
             val painter = rememberAsyncImagePainter(
-                model = thumbUrl,
+                model = artwork.links?.thumbnail?.href.orEmpty(),
                 error = painterResource(id = R.drawable.artsy_logo)
             )
             Image(
@@ -175,12 +174,13 @@ private fun ArtworkCard(
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(if (isDarkTheme) Color(0xFF303031) else MaterialTheme.colorScheme.surface)
                     .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
                     text = "${artwork.title.orEmpty()}, ${artwork.date.orEmpty()}",
+                    color = if (isDarkTheme) Color.White else MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
@@ -199,7 +199,3 @@ private fun ArtworkCard(
         }
     }
 }
-
-
-
-
