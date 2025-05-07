@@ -264,7 +264,7 @@ fun ArtistCard(
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
                         .size(32.dp)
-                        .background(Color.White, shape = CircleShape)
+                        .background(Color(0xFFbfcdf2), shape = CircleShape)
                 ) {
                     Icon(
                         imageVector        = if (isFav) Icons.Filled.Star else Icons.Filled.StarBorder,
