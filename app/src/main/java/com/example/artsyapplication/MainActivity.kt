@@ -143,7 +143,6 @@ fun AppRouter() {
                     }
                 },
                 onArtistSelected = { id, name ->
-                    // URL‐encode name so spaces don’t break the route
                     val encodedName = Uri.encode(name)
                     navController.navigate("artistDetails/$id/$encodedName")
                 },
@@ -249,11 +248,18 @@ fun AppRouter() {
             val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""
             ArtistDetailsScreen(
-                user          = currentUser,
-                artistId      = artistId,
-                artistName    = artistName,
-                navController = navController,
-                onBack        = { navController.popBackStack() }
+                user             = currentUser,
+                artistId         = artistId,
+                artistName       = artistName,
+                navController    = navController,
+                onBack           = { navController.popBackStack() },
+                onFavoriteAdded  = { fav ->
+                    currentUser?.let { user ->
+                        currentUser = user.copy(
+                            favourites = user.favourites + fav
+                        )
+                    }
+                }
             )
         }
     }
