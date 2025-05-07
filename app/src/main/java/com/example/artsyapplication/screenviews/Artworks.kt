@@ -30,11 +30,9 @@ import retrofit2.http.Query
 data class ArtworksResponse(
     @SerializedName("_embedded") val embedded: EmbeddedArtworks
 )
-
 data class EmbeddedArtworks(
     @SerializedName("artworks") val artworks: List<ArtworkData>
 )
-
 data class ArtworkData(
     @SerializedName("id") val id: String?,
     @SerializedName("title") val title: String?,
@@ -46,7 +44,6 @@ private interface ArtworksApiService {
     @GET("api/artworksdata")
     suspend fun getArtworks(@Query("id") id: String): Response<ArtworksResponse>
 }
-
 private val artworksService: ArtworksApiService by lazy {
     Retrofit.Builder()
         .baseUrl("http://10.0.2.2:3000/")
@@ -82,65 +79,77 @@ fun Artworks(artistId: String) {
         }
     }
 
-    when {
-        isLoading -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(if (isDarkTheme) Color.Black else Color.Transparent)
+    ) {
+        when {
+            isLoading -> Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = 16.dp),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Loading..")
             }
-        }
-        errorMsg != null -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            errorMsg != null -> Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(text = errorMsg!!)
             }
-        }
-        else -> {
-            if (artworks.isEmpty()) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    tonalElevation = 0.dp
-                ) {
-                    Text(
-                        text = "No Artworks",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        textAlign = TextAlign.Center,
+            else -> {
+                if (artworks.isEmpty()) {
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp)
-                    )
-                }
-            } else {
-                LazyColumn(
-                    Modifier
-                        .fillMaxSize()
-                        .background(if (isDarkTheme) Color.Black else Color.Transparent)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(artworks) { artwork ->
-                        ArtworkCard(
-                            artwork = artwork,
-                            onViewCategories = { id ->
-                                selectedArtworkId = id
-                                showCategories = true
-                            },
-                            isDarkTheme = isDarkTheme
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        tonalElevation = 0.dp
+                    ) {
+                        Text(
+                            text = "No Artworks",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp)
                         )
+                    }
+                } else {
+                    LazyColumn(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(artworks) { artwork ->
+                            ArtworkCard(
+                                artwork = artwork,
+                                onViewCategories = { id ->
+                                    selectedArtworkId = id
+                                    showCategories = true
+                                },
+                                isDarkTheme = isDarkTheme
+                            )
+                        }
                     }
                 }
             }
         }
-    }
 
-    if (showCategories && selectedArtworkId != null) {
-        Categories(
-            artworkId = selectedArtworkId!!,
-            onDismiss = { showCategories = false }
-        )
+        if (showCategories && selectedArtworkId != null) {
+            Categories(
+                artworkId = selectedArtworkId!!,
+                onDismiss = { showCategories = false }
+            )
+        }
     }
 }
 
@@ -170,7 +179,6 @@ private fun ArtworkCard(
                     .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
                 contentScale = ContentScale.Crop
             )
-
             Column(
                 Modifier
                     .fillMaxWidth()
@@ -186,9 +194,7 @@ private fun ArtworkCard(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
-
                 Spacer(Modifier.height(8.dp))
-
                 Button(
                     onClick = { artwork.id?.let(onViewCategories) },
                     modifier = Modifier.align(Alignment.CenterHorizontally)

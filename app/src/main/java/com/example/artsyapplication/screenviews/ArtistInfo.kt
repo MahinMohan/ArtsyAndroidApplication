@@ -1,4 +1,3 @@
-// ArtistInfo.kt
 package com.example.artsyapplication.screenviews
 
 import androidx.compose.foundation.background
@@ -63,52 +62,67 @@ fun ArtistInfo(artistId: String) {
         }
     }
 
-    if (isLoading) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 48.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator()
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Loading...", color = if (isDarkTheme) Color.White else Color.Black)
-        }
-    } else {
-        artist?.let {
+    // Always fill background immediately
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(if (isDarkTheme) Color.Black else Color.Transparent)
+    ) {
+        if (isLoading) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(if (isDarkTheme) Color.Black else Color.Transparent)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(top = 48.dp),
+                verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(8.dp))
                 Text(
-                    text = it.name,
-                    color = if (isDarkTheme) Color.White else Color.Black,
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    textAlign = TextAlign.Center
+                    "Loading...",
+                    color = if (isDarkTheme) Color.White else Color.Black
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "${it.nationality}, ${it.birthday} - ${it.deathday}",
-                    color = if (isDarkTheme) Color.White else Color.Black,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = it.biography,
-                    color = if (isDarkTheme) Color.White else Color.Black,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Justify
-                )
-                Spacer(modifier = Modifier.height(32.dp))
             }
-        } ?: Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No artist info found.", color = if (isDarkTheme) Color.White else Color.Black)
+        } else {
+            artist?.let {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = it.name,
+                        color = if (isDarkTheme) Color.White else Color.Black,
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "${it.nationality}, ${it.birthday} - ${it.deathday}",
+                        color = if (isDarkTheme) Color.White else Color.Black,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = it.biography,
+                        color = if (isDarkTheme) Color.White else Color.Black,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Justify
+                    )
+                    Spacer(Modifier.height(32.dp))
+                }
+            } ?: Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "No artist info found.",
+                    color = if (isDarkTheme) Color.White else Color.Black
+                )
+            }
         }
     }
 }
