@@ -3,6 +3,7 @@ package com.example.artsyapplication.screenviews
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,7 +43,11 @@ fun HomeScreen(
     onFavoriteAdded    : (Favorite) -> Unit,
     onFavoriteRemoved  : (String) -> Unit
 ) {
-    val topBarBlue  = Color(0xFFbfcdf2)
+    val topBarBlue     = Color(0xFFbfcdf2)
+    val isDarkTheme    = isSystemInDarkTheme()
+    val topBarColor    = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
+    val titleTextColor = if (isDarkTheme) Color.White else Color.Black
+
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var searchText  by rememberSaveable { mutableStateOf("") }
 
@@ -64,8 +69,8 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize(),
             topBar   = {
                 TopAppBar(
-                    colors         = topAppBarColors(containerColor = topBarBlue),
-                    title          = { Text("Artist Search", color = Color.Black) },
+                    colors         = topAppBarColors(containerColor = topBarColor),
+                    title          = { Text("Artist Search", color = titleTextColor) },
                     navigationIcon = {},
                     actions        = {
                         IconButton(onClick = { isSearching = true }) {
@@ -169,9 +174,16 @@ fun HomeScreen(
                     Button(
                         onClick        = onLogin,
                         shape          = RoundedCornerShape(24.dp),
+                        colors         = if (isDarkTheme)
+                            ButtonDefaults.buttonColors(containerColor = Color(0xFF223D6B))
+                        else
+                            ButtonDefaults.buttonColors(),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                     ) {
-                        Text("Log in to see favorites")
+                        Text(
+                            "Log in to see favorites",
+                            color = if (isDarkTheme) Color.White else Color.Unspecified
+                        )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                 }

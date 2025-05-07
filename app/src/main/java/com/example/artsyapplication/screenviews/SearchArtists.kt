@@ -1,8 +1,9 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
 package com.example.artsyapplication.screenviews
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,19 +17,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -56,7 +47,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// ── extend your model to include the extra fields ────────────────
 data class Artist(
     @SerializedName("type")        val type:        String?,
     @SerializedName("title")       val title:       String?,
@@ -74,9 +64,7 @@ data class Links(
     @SerializedName("thumbnail") val thumbnail: Href?
 )
 
-data class Href(
-    @SerializedName("href") val href: String?
-)
+data class Href(@SerializedName("href") val href: String?)
 
 interface ApiService {
     @GET("api/searchdata")
@@ -108,21 +96,22 @@ fun SearchArtistsScreen(
     onFavoriteAdded    : (Favorite) -> Unit,
     onFavoriteRemoved  : (String) -> Unit
 ) {
-    val topBarBlue     = Color(0xFFbfcdf2)
-    val searchResults  = remember { mutableStateOf<List<Artist>>(emptyList()) }
-    val coroutineScope = rememberCoroutineScope()
+    val topBarBlue       = Color(0xFFbfcdf2)
+    val isDarkTheme      = isSystemInDarkTheme()
+    val topBarColor      = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
+    val textColor        = if (isDarkTheme) Color.White else Color.Black
+    val placeholderColor = if (isDarkTheme) Color.White else Color.DarkGray
+
+    val searchResults    = remember { mutableStateOf<List<Artist>>(emptyList()) }
+    val coroutineScope   = rememberCoroutineScope()
 
     LaunchedEffect(searchText) {
         if (searchText.length >= 3) {
-            try {
-                val response = RetrofitClient.instance.searchArtists(searchText)
-                searchResults.value = if (response.isSuccessful) {
-                    response.body() ?: emptyList()
-                } else {
-                    emptyList()
-                }
+            searchResults.value = try {
+                val resp = RetrofitClient.instance.searchArtists(searchText)
+                if (resp.isSuccessful) resp.body()!! else emptyList()
             } catch (_: Exception) {
-                searchResults.value = emptyList()
+                emptyList()
             }
         } else {
             searchResults.value = emptyList()
@@ -132,37 +121,45 @@ fun SearchArtistsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarBlue),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor),
                 title  = {
                     val focusRequester = remember { FocusRequester() }
                     LaunchedEffect(Unit) { focusRequester.requestFocus() }
                     TextField(
                         value               = searchText,
                         onValueChange       = onSearchTextChange,
-                        placeholder         = { Text("Search artists...") },
+                        placeholder         = { Text("Search artists...", color = placeholderColor) },
                         singleLine          = true,
                         modifier            = Modifier
                             .fillMaxWidth()
                             .focusRequester(focusRequester),
                         colors              = TextFieldDefaults.colors(
-                            focusedTextColor          = Color.Black,
-                            unfocusedTextColor        = Color.Black,
-                            focusedContainerColor     = topBarBlue,
-                            unfocusedContainerColor   = topBarBlue,
-                            cursorColor               = Color.Black,
-                            focusedPlaceholderColor   = Color.DarkGray,
-                            unfocusedPlaceholderColor = Color.DarkGray
+                            focusedTextColor          = textColor,
+                            unfocusedTextColor        = textColor,
+                            focusedContainerColor     = topBarColor,
+                            unfocusedContainerColor   = topBarColor,
+                            cursorColor               = textColor,
+                            focusedPlaceholderColor   = placeholderColor,
+                            unfocusedPlaceholderColor = placeholderColor
                         ),
                         keyboardOptions     = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
                         keyboardActions     = KeyboardActions(onSearch = {})
                     )
                 },
                 navigationIcon = {
-                    Icon(imageVector = Icons.Filled.Search, contentDescription = "Search Icon")
+                    Icon(
+                        imageVector        = Icons.Filled.Search,
+                        contentDescription = "Search Icon",
+                        tint               = textColor
+                    )
                 },
                 actions = {
                     IconButton(onClick = onCancelSearch) {
-                        Icon(imageVector = Icons.Filled.Close, contentDescription = "Close")
+                        Icon(
+                            imageVector        = Icons.Filled.Close,
+                            contentDescription = "Close",
+                            tint               = textColor
+                        )
                     }
                 }
             )
@@ -180,14 +177,14 @@ fun SearchArtistsScreen(
                 ArtistCard(
                     artist           = artist,
                     onDetailsClick   = {
-                        if (artistId.isNotEmpty()) onArtistSelected(artistId, artist.title ?: "Unknown")
+                        if (artistId.isNotEmpty())
+                            onArtistSelected(artistId, artist.title ?: "Unknown")
                     },
                     user             = user,
                     onAddToFavorites = {
                         if (user != null) {
                             coroutineScope.launch {
                                 if (isFav) {
-                                    // remove from favourites
                                     try {
                                         DeleteFavouritesClient
                                             .api
@@ -197,38 +194,33 @@ fun SearchArtistsScreen(
                                         e.printStackTrace()
                                     }
                                 } else {
-                                    // existing add-to-favourites flow
-                                    try {
-                                        val resp = ArtistDataClient.api.getArtistData(artistId)
-                                        if (!resp.isSuccessful) return@launch
-                                        val data = resp.body()!!
-
-                                        FavouritesClient.api.addToFavorites(
-                                            AddFavouriteRequest(
-                                                artistId    = data.id,
-                                                title       = data.name,
-                                                birthyear   = data.birthday,
-                                                deathyear   = data.deathday,
-                                                nationality = data.nationality,
-                                                image       = artist.links?.thumbnail?.href.orEmpty()
-                                            )
+                                    val resp = ArtistDataClient.api.getArtistData(artistId)
+                                    if (!resp.isSuccessful) return@launch
+                                    val data = resp.body()!!
+                                    FavouritesClient.api.addToFavorites(
+                                        AddFavouriteRequest(
+                                            artistId    = data.id,
+                                            title       = data.name,
+                                            birthyear   = data.birthday,
+                                            deathyear   = data.deathday,
+                                            nationality = data.nationality,
+                                            image       = artist.links?.thumbnail?.href.orEmpty()
                                         )
-
-                                        val newFav = Favorite(
+                                    )
+                                    onFavoriteAdded(
+                                        Favorite(
                                             artistId    = data.id,
                                             title       = data.name,
                                             birthyear   = data.birthday,
                                             nationality = data.nationality,
                                             addedAt     = Instant.now().toString()
                                         )
-                                        onFavoriteAdded(newFav)
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    }
+                                    )
                                 }
                             }
                         }
-                    }
+                    },
+                    isDarkTheme      = isDarkTheme
                 )
             }
         }
@@ -240,7 +232,8 @@ fun ArtistCard(
     artist           : Artist,
     onDetailsClick   : () -> Unit,
     user             : LoggedInUser?,
-    onAddToFavorites : () -> Unit
+    onAddToFavorites : () -> Unit,
+    isDarkTheme      : Boolean
 ) {
     Card(
         modifier  = Modifier
@@ -250,9 +243,8 @@ fun ArtistCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box(modifier = Modifier.height(200.dp)) {
-            val thumbnailUrl = artist.links?.thumbnail?.href
             val painter = rememberAsyncImagePainter(
-                model        = thumbnailUrl ?: "",
+                model        = artist.links?.thumbnail?.href.orEmpty(),
                 error        = painterResource(id = R.drawable.artsy_logo),
                 contentScale = ContentScale.Crop
             )
@@ -274,11 +266,14 @@ fun ArtistCard(
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
                         .size(32.dp)
-                        .background(Color(0xFFbfcdf2), shape = CircleShape)
+                        .background(
+                            color = if (isDarkTheme) Color(0xFF223D6B) else Color(0xFFbfcdf2),
+                            shape = CircleShape
+                        )
                 ) {
                     Icon(
                         imageVector        = if (isFav) Icons.Filled.Star else Icons.Filled.StarBorder,
-                        tint               = if (isFav) Color.Black else Color.Gray,
+                        tint               = if (isFav) Color.White else Color.Gray,
                         contentDescription = if (isFav) "Remove from favorites" else "Add to favorites"
                     )
                 }
@@ -289,19 +284,27 @@ fun ArtistCard(
                     .fillMaxWidth()
                     .height(40.dp)
                     .align(Alignment.BottomStart)
-                    .background(Color(0xFFbfcdf2).copy(alpha = 0.85f))
+                    .background(
+                        color = if (isDarkTheme)
+                            Color(0xFF223D6B).copy(alpha = 0.85f)
+                        else
+                            Color(0xFFbfcdf2).copy(alpha = 0.85f)
+                    )
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment     = Alignment.CenterVertically
             ) {
                 Text(
                     text  = artist.title ?: "",
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black)
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = if (isDarkTheme) Color.White else Color.Black
+                    )
                 )
                 IconButton(onClick = onDetailsClick) {
                     Icon(
                         imageVector        = Icons.Filled.ArrowForwardIos,
-                        contentDescription = "Details"
+                        contentDescription = "Details",
+                        tint               = if (isDarkTheme) Color.White else Color.Black
                     )
                 }
             }

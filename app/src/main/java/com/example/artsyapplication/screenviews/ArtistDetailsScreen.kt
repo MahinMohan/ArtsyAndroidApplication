@@ -40,7 +40,7 @@ fun ArtistDetailsScreen(
     navController      : NavController,
     onBack             : () -> Unit,
     onFavoriteAdded    : (Favorite) -> Unit,
-    onFavoriteRemoved  : (String) -> Unit      // newly added callback
+    onFavoriteRemoved  : (String) -> Unit
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
     val coroutineScope   = rememberCoroutineScope()
@@ -64,7 +64,7 @@ fun ArtistDetailsScreen(
                     IconButton(onClick = {
                         coroutineScope.launch {
                             if (isFav) {
-                                // —— remove from favourites ——
+
                                 try {
                                     DeleteFavouritesClient
                                         .api
@@ -74,7 +74,7 @@ fun ArtistDetailsScreen(
                                     e.printStackTrace()
                                 }
                             } else {
-                                // —— add to favourites ——
+
                                 val resp = ArtistDataClient.api.getArtistData(artistId)
                                 if (!resp.isSuccessful) return@launch
                                 val data = resp.body()!!
@@ -134,7 +134,7 @@ fun ArtistDetailsScreen(
                 navController      = navController,
                 user               = user,
                 onFavoriteAdded    = onFavoriteAdded,
-                onFavoriteRemoved  = onFavoriteRemoved   // pass down removal callback
+                onFavoriteRemoved  = onFavoriteRemoved
             )
         }
     }
