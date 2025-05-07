@@ -113,7 +113,12 @@ fun ArtistDetailsScreen(
         when (selectedTabIndex) {
             0 -> ArtistInfo(artistId)
             1 -> Artworks(artistId)
-            2 -> if (user != null) Similarartists(artistId, navController)
+            2 -> if (user != null) Similarartists(
+                artistId        = artistId,
+                navController   = navController,
+                user            = user,
+                onFavoriteAdded = onFavoriteAdded
+            )
         }
     }
 }
