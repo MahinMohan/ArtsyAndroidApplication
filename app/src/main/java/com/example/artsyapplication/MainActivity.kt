@@ -1,6 +1,7 @@
 package com.example.artsyapplication
 
 import android.os.Bundle
+import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -142,7 +143,16 @@ fun AppRouter() {
                     }
                 },
                 onArtistSelected = { id, name ->
-                    navController.navigate("artistDetails/$id/$name")
+                    // URL‐encode name so spaces don’t break the route
+                    val encodedName = Uri.encode(name)
+                    navController.navigate("artistDetails/$id/$encodedName")
+                },
+                onFavoriteAdded  = { fav ->
+                    currentUser?.let { user ->
+                        currentUser = user.copy(
+                            favourites = user.favourites + fav
+                        )
+                    }
                 }
             )
         }
@@ -150,7 +160,6 @@ fun AppRouter() {
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
-                    // re-fetch /api/me so favourites come in immediately
                     scope.launch {
                         try {
                             val resp = MeClient.api.me()
@@ -194,7 +203,6 @@ fun AppRouter() {
         composable("register") {
             RegisterScreen(
                 onRegisterSuccess = {
-                    // re-fetch /api/me so favourites come in immediately
                     scope.launch {
                         try {
                             val resp = MeClient.api.me()

@@ -22,20 +22,23 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
+import com.example.artsyapplication.Favorite
 import com.example.artsyapplication.LoggedInUser
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    user: LoggedInUser?,
-    onLogin: () -> Unit,
-    onLogout: () -> Unit,
-    onDeleteAccount: () -> Unit,
-    onArtistSelected: (artistId: String, artistName: String) -> Unit
+    user             : LoggedInUser?,
+    onLogin          : () -> Unit,
+    onLogout         : () -> Unit,
+    onDeleteAccount  : () -> Unit,
+    onArtistSelected : (artistId: String, artistName: String) -> Unit,
+    onFavoriteAdded  : (Favorite) -> Unit
 ) {
     val topBarBlue  = Color(0xFFbfcdf2)
     var isSearching by rememberSaveable { mutableStateOf(false) }
@@ -49,7 +52,9 @@ fun HomeScreen(
                 isSearching = false
                 searchText  = ""
             },
-            onArtistSelected   = onArtistSelected
+            onArtistSelected   = onArtistSelected,
+            user               = user,
+            onFavoriteAdded    = onFavoriteAdded
         )
     } else {
         Scaffold(
@@ -80,8 +85,8 @@ fun HomeScreen(
                                     )
                                 }
                                 DropdownMenu(
-                                    expanded          = menuExpanded,
-                                    onDismissRequest  = { menuExpanded = false }
+                                    expanded         = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false }
                                 ) {
                                     DropdownMenuItem(
                                         text    = { Text("Log out", color = Color.Blue) },
@@ -107,6 +112,15 @@ fun HomeScreen(
             val uriHandler  = LocalUriHandler.current
             val currentDate = remember {
                 LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
+            }
+
+            // live clock state
+            var now by remember { mutableStateOf(Instant.now()) }
+            LaunchedEffect(Unit) {
+                while (true) {
+                    delay(1000L)
+                    now = Instant.now()
+                }
             }
 
             Column(
@@ -184,7 +198,7 @@ fun HomeScreen(
                         }
 
                         Text(
-                            text  = timeAgo(fav.addedAt),
+                            text  = timeAgo(fav.addedAt, now),
                             style = MaterialTheme.typography.bodySmall
                         )
 
@@ -209,9 +223,9 @@ fun HomeScreen(
 }
 
 // ── helper to render “X seconds/minutes/hours/days ago” ──────────────
-private fun timeAgo(iso: String): String {
+private fun timeAgo(iso: String, now: Instant): String {
     val then = Instant.parse(iso)
-    val diff = Duration.between(then, Instant.now()).seconds
+    val diff = Duration.between(then, now).seconds
     return when {
         diff < 60      -> "$diff seconds ago"
         diff < 3_600   -> "${diff / 60} minutes ago"
