@@ -1,8 +1,11 @@
 package com.example.artsyapplication.screenviews
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,9 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import coil.compose.rememberAsyncImagePainter
 import com.example.artsyapplication.R
 import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -49,7 +55,7 @@ private val genesService: GenesApiService by lazy {
         .create(GenesApiService::class.java)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun Categories(
     artworkId: String,
@@ -113,61 +119,76 @@ fun Categories(
                                 .height(520.dp),
                             contentAlignment = Alignment.Center
                         ) {
+                            val pagestate = rememberPagerState(initialPage = 0) { genes.size }
+                            val coroutineScope = rememberCoroutineScope()
                             IconButton(
-                                onClick = { if (index > 0) index-- },
-                                enabled = index > 0,
-                                modifier = Modifier.align(Alignment.CenterStart)
+                                onClick = { if(pagestate.currentPage > 0){
+                                    coroutineScope.launch {
+                                        pagestate.animateScrollToPage(pagestate.currentPage-1)
+                                    }
+                                } },
+                                enabled = pagestate.currentPage > 0,
+                                modifier = Modifier.align(Alignment.CenterStart).zIndex(2F)
                             ) {
                                 Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous")
                             }
 
-                            Card(
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth(0.80f)
-                                    .fillMaxHeight()
-                            ) {
-                                Column {
-                                    val thumbUrl = genes[index].links?.thumbnail?.href
-                                    Image(
-                                        painter = rememberAsyncImagePainter(
-                                            model = thumbUrl,
-                                            error = painterResource(R.drawable.artsy_logo)
-                                        ),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(150.dp),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                    Spacer(Modifier.height(8.dp))
-                                    Text(
-                                        genes[index].name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                                    )
-                                    Spacer(Modifier.height(4.dp))
-                                    // Make description scrollable
-                                    val scroll = rememberScrollState()
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .weight(1f)
-                                            .verticalScroll(scroll)
-                                            .padding(horizontal = 12.dp)
-                                    ) {
-                                        Text(
-                                            genes[index].description.orEmpty(),
-                                            style = MaterialTheme.typography.bodyMedium
+                            HorizontalPager(state = pagestate,
+                                contentPadding= PaddingValues(horizontal = 18.dp),
+                                pageSpacing = 2.dp) {
+                                page ->
+                                val gene = genes[page]
+                                Card(
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+
+                                ) {
+                                    Column {
+                                        val thumbUrl = gene.links?.thumbnail?.href
+                                        Image(
+                                            painter = rememberAsyncImagePainter(
+                                                model = thumbUrl,
+                                                error = painterResource(R.drawable.artsy_logo)
+                                            ),
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(150.dp),
+                                            contentScale = ContentScale.Crop
                                         )
+                                        Spacer(Modifier.height(8.dp))
+                                        Text(
+                                            gene.name,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                                        )
+                                        Spacer(Modifier.height(4.dp))
+                                        // Make description scrollable
+                                        val scroll = rememberScrollState()
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .weight(1f)
+                                                .verticalScroll(scroll)
+                                                .padding(horizontal = 12.dp)
+                                        ) {
+                                            Text(
+                                                gene.description.orEmpty(),
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
                                     }
                                 }
                             }
-
                             IconButton(
-                                onClick = { if (index < genes.lastIndex) index++ },
-                                enabled = index < genes.lastIndex,
-                                modifier = Modifier.align(Alignment.CenterEnd)
+                                onClick = { if(pagestate.currentPage < genes.lastIndex){
+                                    coroutineScope.launch {
+                                        pagestate.animateScrollToPage(pagestate.currentPage+1)
+                                    }
+                                } },
+                                enabled = pagestate.currentPage < genes.lastIndex,
+                                modifier = Modifier.align(Alignment.CenterEnd).zIndex(2F)
                             ) {
                                 Icon(Icons.Filled.ChevronRight, contentDescription = "Next")
                             }
