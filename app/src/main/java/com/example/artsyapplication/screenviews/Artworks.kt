@@ -94,7 +94,7 @@ fun Artworks(artistId: String) {
             ) {
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Loading..")
+                Text("Loading..", color = if (isDarkTheme) Color.White else Color.Black)
             }
             errorMsg != null -> Box(
                 Modifier.fillMaxSize(),
