@@ -33,6 +33,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.artsyapplication.Favorite
 import com.example.artsyapplication.LoggedInUser
@@ -144,7 +145,7 @@ fun SearchArtistsScreen(
                     TextField(
                         value               = searchText,
                         onValueChange       = onSearchTextChange,
-                        placeholder         = { Text("Search artists...", color = placeholderColor) },
+                        placeholder         = { Text("Search artists...", color = placeholderColor, fontSize = 22.sp) },
                         singleLine          = true,
                         modifier            = Modifier
                             .fillMaxWidth()
