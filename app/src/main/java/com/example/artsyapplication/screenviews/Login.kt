@@ -1,10 +1,10 @@
-// Login.kt
 package com.example.artsyapplication.screenviews
 
 import android.util.Patterns
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -26,7 +26,6 @@ import com.example.artsyapplication.network.Network
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Response
@@ -34,7 +33,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
-import com.example.artsyapplication.Favorite
 
 data class LoginRequest(val email: String, val password: String)
 
@@ -47,15 +45,12 @@ object LoginClient {
     val api: LoginApiService by lazy {
         Retrofit.Builder()
             .baseUrl("http://10.0.2.2:3000/")
-//            .client(OkHttpClient.Builder().build())
             .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(LoginApiService::class.java)
     }
 }
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,23 +59,24 @@ fun LoginScreen(
     onCancel:       () -> Unit,
     onRegister:     () -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
-    val topBarBlue   = Color(0xFFbfcdf2)
-    val isDarkTheme    = isSystemInDarkTheme()
-    val topBarColor    = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
+    val focusManager        = LocalFocusManager.current
+    val topBarBlue          = Color(0xFFbfcdf2)
+    val isDarkTheme         = isSystemInDarkTheme()
+    val topBarColor         = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
 
-    var email          by remember { mutableStateOf("") }
-    var emailError     by remember { mutableStateOf<String?>(null) }
-    var emailTouched   by remember { mutableStateOf(false) }
+    var email               by remember { mutableStateOf("") }
+    var emailError          by remember { mutableStateOf<String?>(null) }
+    var emailTouched        by remember { mutableStateOf(false) }
 
-    var password        by remember { mutableStateOf("") }
-    var passwordError   by remember { mutableStateOf<String?>(null) }
-    var passwordTouched by remember { mutableStateOf(false) }
+    var password            by remember { mutableStateOf("") }
+    var passwordError       by remember { mutableStateOf<String?>(null) }
+    var passwordTouched     by remember { mutableStateOf(false) }
 
-    var isLoggingIn by remember { mutableStateOf(false) }
-    var loginError  by remember { mutableStateOf<String?>(null) }
+    var isLoggingIn         by remember { mutableStateOf(false) }
+    var loginError          by remember { mutableStateOf<String?>(null) }
 
-    val scope = rememberCoroutineScope()
+    val scope               = rememberCoroutineScope()
+    val snackbarHostState   = remember { SnackbarHostState() }
 
     val formValid = email.isNotBlank() &&
             password.isNotBlank() &&
@@ -98,17 +94,18 @@ fun LoginScreen(
                 },
                 colors = smallTopAppBarColors(containerColor = topBarColor)
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                .imePadding(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -207,17 +204,17 @@ fun LoginScreen(
                             val obj = JSONObject(body)
                             when {
                                 obj.has("message") -> {
-                                    // Backend returned an error message
                                     loginError = obj.getString("message")
                                 }
                                 obj.has("_id") -> {
-                                    // Successful login
                                     val user = LoggedInUser(
-                                        _id      = obj.getString("_id"),
-                                        fullname = obj.getString("fullname"),
-                                        gravatar = obj.getString("gravatar"),
+                                        _id        = obj.getString("_id"),
+                                        fullname   = obj.getString("fullname"),
+                                        gravatar   = obj.getString("gravatar"),
                                         favourites = emptyList()
                                     )
+                                    // show snackbar on success
+                                    snackbarHostState.showSnackbar("Logged in successfully")
                                     onLoginSuccess(user)
                                 }
                                 else -> {

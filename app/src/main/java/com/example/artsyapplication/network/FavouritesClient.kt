@@ -9,7 +9,7 @@ import retrofit2.http.Body
 import retrofit2.http.HTTP
 import retrofit2.http.POST
 
-// ── your existing add‐to‐favourites code unchanged ────────────────────────
+
 data class AddFavouriteRequest(
     @SerializedName("artistId")    val artistId:    String,
     @SerializedName("title")       val title:       String,
@@ -37,9 +37,7 @@ object FavouritesClient {
     }
 }
 
-// ── delete‐from‐favourites support ──────────────────────────────────────
 
-// <<-- changed this field name to "id" to match server-side req.body.id
 data class DeleteFavouriteRequest(
     @SerializedName("id") val id: String
 )

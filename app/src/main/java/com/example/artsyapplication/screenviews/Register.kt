@@ -47,7 +47,6 @@ object RegisterClient {
     val api: RegisterApiService by lazy {
         Retrofit.Builder()
             .baseUrl("http://10.0.2.2:3000/")
-//            .client(OkHttpClient.Builder().build())
             .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -109,11 +108,12 @@ fun RegisterScreen(
             Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                .imePadding(),
             verticalArrangement   = Arrangement.Center,
             horizontalAlignment   = Alignment.CenterHorizontally
         ) {
-            // Full Name field
+
             OutlinedTextField(
                 value = fullName,
                 onValueChange = {
@@ -148,7 +148,7 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Email field
+
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -177,7 +177,7 @@ fun RegisterScreen(
                     onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
                 )
             )
-            // show field‑validation error first
+
             if (emailTouched && emailError != null) {
                 Text(
                     emailError!!,
@@ -186,7 +186,7 @@ fun RegisterScreen(
                     modifier = Modifier.align(Alignment.Start).padding(top = 4.dp)
                 )
             }
-            // then show backend "email already exists" error
+
             if (registerError != null && registerError!!.contains("email", true)) {
                 Text(
                     registerError!!,
@@ -198,7 +198,7 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Password field
+
             OutlinedTextField(
                 value               = password,
                 onValueChange       = {

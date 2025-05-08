@@ -1,4 +1,3 @@
-// HomeScreen.kt
 package com.example.artsyapplication.screenviews
 
 import androidx.compose.foundation.Image
@@ -31,22 +30,27 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    user               : LoggedInUser?,
-    onLogin            : () -> Unit,
-    onLogout           : () -> Unit,
-    onDeleteAccount    : () -> Unit,
-    onArtistSelected   : (artistId: String, artistName: String) -> Unit,
-    onFavoriteAdded    : (Favorite) -> Unit,
-    onFavoriteRemoved  : (String) -> Unit
+    user: LoggedInUser?,
+    onLogin: () -> Unit,
+    onLogout: () -> Unit,
+    onDeleteAccount: () -> Unit,
+    onArtistSelected: (artistId: String, artistName: String) -> Unit,
+    onFavoriteAdded: (Favorite) -> Unit,
+    onFavoriteRemoved: (String) -> Unit
 ) {
-    val topBarBlue     = Color(0xFFbfcdf2)
-    val isDarkTheme    = isSystemInDarkTheme()
-    val topBarColor    = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
-    val titleTextColor = if (isDarkTheme) Color.White else Color.Black
+    val topBarBlue       = Color(0xFFbfcdf2)
+    val isDarkTheme      = isSystemInDarkTheme()
+    val topBarColor      = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
+    val titleTextColor   = if (isDarkTheme) Color.White else Color.Black
+
+    // Added for snackbars
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope             = rememberCoroutineScope()
 
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var searchText  by rememberSaveable { mutableStateOf("") }
@@ -66,8 +70,8 @@ fun HomeScreen(
         )
     } else {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            topBar   = {
+            modifier     = Modifier.fillMaxSize(),
+            topBar       = {
                 TopAppBar(
                     colors         = topAppBarColors(containerColor = topBarColor),
                     title          = { Text("Artist Search", color = titleTextColor) },
@@ -97,17 +101,23 @@ fun HomeScreen(
                                     onDismissRequest = { menuExpanded = false }
                                 ) {
                                     DropdownMenuItem(
-                                        text    = { Text("Log out", color = Color.Blue) },
+                                        text = { Text("Log out", color = Color.Blue) },
                                         onClick = {
                                             onLogout()
                                             menuExpanded = false
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Logged out successfully")
+                                            }
                                         }
                                     )
                                     DropdownMenuItem(
-                                        text    = { Text("Delete account", color = Color.Red) },
+                                        text = { Text("Delete account", color = Color.Red) },
                                         onClick = {
                                             onDeleteAccount()
                                             menuExpanded = false
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Deleted account successfully")
+                                            }
                                         }
                                     )
                                 }
@@ -115,7 +125,8 @@ fun HomeScreen(
                         }
                     }
                 )
-            }
+            },
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
         ) { innerPadding ->
             val uriHandler  = LocalUriHandler.current
             val currentDate = remember {
@@ -239,9 +250,9 @@ private fun timeAgo(iso: String, now: Instant): String {
     val then = Instant.parse(iso)
     val diff = Duration.between(then, now).seconds
     return when {
-        diff < 60      -> "$diff seconds ago"
-        diff < 3_600   -> "${diff / 60} minutes ago"
-        diff < 86_400  -> "${diff / 3_600} hours ago"
-        else           -> "${diff / 86_400} days ago"
+        diff < 60     -> "$diff seconds ago"
+        diff < 3_600  -> "${diff / 60} minutes ago"
+        diff < 86_400 -> "${diff / 3_600} hours ago"
+        else          -> "${diff / 86_400} days ago"
     }
 }
