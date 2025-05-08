@@ -164,7 +164,6 @@ fun Categories(
                                             modifier = Modifier.align(Alignment.CenterHorizontally)
                                         )
                                         Spacer(Modifier.height(4.dp))
-                                        // Make description scrollable
                                         val scroll = rememberScrollState()
                                         Column(
                                             modifier = Modifier

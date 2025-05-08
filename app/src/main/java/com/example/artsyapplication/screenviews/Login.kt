@@ -120,6 +120,12 @@ fun LoginScreen(
                     .onFocusChanged { fs ->
                         if (fs.isFocused) {
                             if (!emailTouched) emailTouched = true
+                            emailError = when {
+                                email.isBlank() -> "Email cannot be empty"
+                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+                                    "Invalid email address"
+                                else -> null
+                            }
                         } else if (emailTouched) {
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
@@ -160,6 +166,9 @@ fun LoginScreen(
                     .onFocusChanged { fs ->
                         if (fs.isFocused) {
                             if (!passwordTouched) passwordTouched = true
+                            passwordError = if (password.isBlank()) {
+                                "Password cannot be empty"
+                            } else null
                         } else if (passwordTouched) {
                             passwordError = if (password.isBlank()) {
                                 "Password cannot be empty"

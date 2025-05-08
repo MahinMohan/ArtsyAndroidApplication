@@ -3,6 +3,7 @@ package com.example.artsyapplication
 
 import android.os.Bundle
 import android.net.Uri
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -235,12 +236,14 @@ fun AppRouter() {
                                         gravatar   = userJson.optString("gravatar",""),
                                         favourites = favsList
                                     )
+                                    navController.navigate("home") {
+                                        popUpTo("home") { inclusive = true }
+                                    }
                                 }
                             }
-                        } catch (_: Exception) { }
-                    }
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
+                        } catch (e: Exception) {
+                            Log.e("REGISTER", "Failed to fetch /api/me", e)
+                        }
                     }
                 },
                 onCancel = { navController.popBackStack() },

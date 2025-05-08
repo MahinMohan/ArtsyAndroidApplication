@@ -128,6 +128,7 @@ fun RegisterScreen(
                     .onFocusChanged { fs ->
                         if (fs.isFocused) {
                             fullNameTouched = true
+                            fullNameError = "Full name cannot be empty"
                         } else if (fullNameTouched && fullName.isBlank()) {
                             fullNameError = "Full name cannot be empty"
                         }
@@ -163,6 +164,11 @@ fun RegisterScreen(
                     .onFocusChanged { fs ->
                         if (fs.isFocused) {
                             emailTouched = true
+                            emailError = when {
+                                email.isBlank() -> "Email cannot be empty"
+                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+                                    "Invalid format"
+                                else -> null}
                         } else if (emailTouched) {
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
@@ -214,6 +220,7 @@ fun RegisterScreen(
                     .onFocusChanged { fs ->
                         if (fs.isFocused) {
                             passwordTouched = true
+                            passwordError = "Password cannot be empty"
                         } else if (passwordTouched && password.isBlank()) {
                             passwordError = "Password cannot be empty"
                         }
