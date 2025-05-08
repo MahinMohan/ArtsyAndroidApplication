@@ -3,6 +3,7 @@ package com.example.artsyapplication.screenviews
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -297,6 +298,7 @@ fun ArtistCard(
     Card(
         modifier  = Modifier
             .fillMaxWidth()
+            .clickable{ onDetailsClick() }
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape     = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)

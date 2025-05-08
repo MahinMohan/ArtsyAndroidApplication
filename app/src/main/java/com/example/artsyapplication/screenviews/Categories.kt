@@ -201,7 +201,7 @@ fun Categories(
 //                                                gene.description.orEmpty(),
 //                                                style = MaterialTheme.typography.bodyMedium
 //                                            )
-                                            LinkifiedText(gene.description.toString())
+                                            RedirectHyperLinkCateg(gene.description.toString())
                                         }
                                     }
                                 }
@@ -237,7 +237,7 @@ fun Categories(
 
 
 @Composable
-fun LinkifiedText(description: String) {
+fun RedirectHyperLinkCateg(description: String) {
     val uriHandler = LocalUriHandler.current
     val annotatedString = buildAnnotatedString {
         val regex = Regex("""\[(.*?)\]\((.*?)\)""")
