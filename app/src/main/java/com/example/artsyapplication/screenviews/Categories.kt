@@ -238,43 +238,44 @@ fun Categories(
 
 @Composable
 fun RedirectHyperLinkCateg(description: String) {
-    val uriHandler = LocalUriHandler.current
-    val annotatedString = buildAnnotatedString {
-        val regex = Regex("""\[(.*?)\]\((.*?)\)""")
-        var lastIndex = 0
-        for (match in regex.findAll(description)) {
-            val range = match.range
-            val label = match.groupValues[1]
-            val rawUrl = match.groupValues[2]
-            val fullUrl = "https://www.artsy.net$rawUrl"
+    val linkColor = MaterialTheme.colorScheme.primary
+    val linkRegex = remember { """\[(.*?)\]\((.*?)\)""".toRegex() }
 
-            if (range.first > lastIndex) {
-                append(description.substring(lastIndex, range.first))
+    val AnnotedString = remember(description, linkColor) {
+        buildAnnotatedString {
+            var curr = 0
+            for (m in linkRegex.findAll(description)) {
+                append(description.substring(curr, m.range.first))
+
+                val (label, path) = m.destructured
+                val url = "https://www.artsy.net$path"
+
+                pushStringAnnotation(tag = "URL", annotation = url)
+                withStyle(
+                    SpanStyle(
+                        color           = linkColor,
+                        textDecoration  = TextDecoration.Underline
+                    )
+                ) {
+                    append(label)
+                }
+                pop()
+
+                curr = m.range.last + 1
             }
 
-            pushStringAnnotation(tag = "URL", annotation = fullUrl)
-            withStyle(style = SpanStyle(
-                color = MaterialTheme.colorScheme.primary,
-                textDecoration = TextDecoration.Underline
-            )) {
-                append(label)
-            }
-            pop()
-
-            lastIndex = range.last + 1
-        }
-
-        if (lastIndex < description.length) {
-            append(description.substring(lastIndex))
+            append(description.substring(curr))
         }
     }
-
+    val handler   = LocalUriHandler.current
     ClickableText(
-        text = annotatedString,
+        text  = AnnotedString,
         style = MaterialTheme.typography.bodyMedium,
         onClick = { offset ->
-            annotatedString.getStringAnnotations("URL", offset, offset)
-                .firstOrNull()?.let { uriHandler.openUri(it.item) }
-            }
-       )
+            AnnotedString
+                .getStringAnnotations("URL", offset, offset)
+                .firstOrNull()
+                ?.let { handler.openUri(it.item) }
+        }
+    )
 }
