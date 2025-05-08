@@ -105,6 +105,7 @@ fun SearchArtistsScreen(
     val placeholderColor  = if (isDarkTheme) Color.White else Color.DarkGray
 
     val searchResults     = remember { mutableStateOf<List<Artist>>(emptyList()) }
+    val hasSearched = remember { mutableStateOf(false) }
     val isLoading         = remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope    = rememberCoroutineScope()
@@ -122,9 +123,11 @@ fun SearchArtistsScreen(
                 emptyList()
             }
             isLoading.value = false
+            hasSearched.value = true
         } else {
             searchResults.value = emptyList()
             isLoading.value = false
+            hasSearched.value = false
         }
     }
 
@@ -197,7 +200,26 @@ fun SearchArtistsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Loading..")
                 }
-            } else {
+            } else if (hasSearched.value && !isLoading.value && searchText.length >= 3 && searchResults.value.isEmpty()) {
+                Column(
+                    modifier            = Modifier
+                        .fillMaxWidth().padding(vertical = 16.dp, horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = topBarBlue, shape = RoundedCornerShape(16.dp))
+                            .padding(vertical = 8.dp),
+                    ) {
+                        Text(
+                            text      = "No results found",
+                            color     = textColor,
+                            modifier  = Modifier.align(Alignment.Center)
+                        )
+                    }
+                }
+            }else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {

@@ -122,12 +122,17 @@ fun Categories(
                             val pagestate = rememberPagerState(initialPage = 0) { genes.size }
                             val coroutineScope = rememberCoroutineScope()
                             IconButton(
-                                onClick = { if(pagestate.currentPage > 0){
+                                onClick = { if(pagestate.currentPage==0){
+                                    coroutineScope.launch {
+                                        pagestate.animateScrollToPage(pagestate.currentPage+genes.size-1)
+                                    }
+                                }
+                                    else if(pagestate.currentPage > 0){
                                     coroutineScope.launch {
                                         pagestate.animateScrollToPage(pagestate.currentPage-1)
                                     }
                                 } },
-                                enabled = pagestate.currentPage > 0,
+
                                 modifier = Modifier.align(Alignment.CenterStart).zIndex(2F)
                             ) {
                                 Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous")
@@ -181,12 +186,18 @@ fun Categories(
                                 }
                             }
                             IconButton(
-                                onClick = { if(pagestate.currentPage < genes.lastIndex){
+                                onClick = {
+                                    if(pagestate.currentPage==genes.size-1){
+                                        coroutineScope.launch {
+                                            pagestate.animateScrollToPage(pagestate.currentPage-genes.size+1)
+                                        }
+                                    }
+
+                                    else if(pagestate.currentPage < genes.lastIndex){
                                     coroutineScope.launch {
                                         pagestate.animateScrollToPage(pagestate.currentPage+1)
                                     }
                                 } },
-                                enabled = pagestate.currentPage < genes.lastIndex,
                                 modifier = Modifier.align(Alignment.CenterEnd).zIndex(2F)
                             ) {
                                 Icon(Icons.Filled.ChevronRight, contentDescription = "Next")
