@@ -8,6 +8,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -17,7 +18,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil.compose.rememberAsyncImagePainter
@@ -29,6 +35,12 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.*
+import androidx.compose.ui.text.withStyle
+import androidx.compose.material3.MaterialTheme
 
 data class GenesResponse(
     @SerializedName("_embedded") val embedded: EmbeddedGenes
@@ -185,10 +197,11 @@ fun Categories(
                                                 .verticalScroll(scroll)
                                                 .padding(horizontal = 12.dp)
                                         ) {
-                                            Text(
-                                                gene.description.orEmpty(),
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
+//                                            Text(
+//                                                gene.description.orEmpty(),
+//                                                style = MaterialTheme.typography.bodyMedium
+//                                            )
+                                            LinkifiedText(gene.description.toString())
                                         }
                                     }
                                 }
@@ -220,4 +233,48 @@ fun Categories(
             }
         }
     }
+}
+
+
+@Composable
+fun LinkifiedText(description: String) {
+    val uriHandler = LocalUriHandler.current
+    val annotatedString = buildAnnotatedString {
+        val regex = Regex("""\[(.*?)\]\((.*?)\)""")
+        var lastIndex = 0
+        for (match in regex.findAll(description)) {
+            val range = match.range
+            val label = match.groupValues[1]
+            val rawUrl = match.groupValues[2]
+            val fullUrl = "https://www.artsy.net$rawUrl"
+
+            if (range.first > lastIndex) {
+                append(description.substring(lastIndex, range.first))
+            }
+
+            pushStringAnnotation(tag = "URL", annotation = fullUrl)
+            withStyle(style = SpanStyle(
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline
+            )) {
+                append(label)
+            }
+            pop()
+
+            lastIndex = range.last + 1
+        }
+
+        if (lastIndex < description.length) {
+            append(description.substring(lastIndex))
+        }
+    }
+
+    ClickableText(
+        text = annotatedString,
+        style = MaterialTheme.typography.bodyMedium,
+        onClick = { offset ->
+            annotatedString.getStringAnnotations("URL", offset, offset)
+                .firstOrNull()?.let { uriHandler.openUri(it.item) }
+            }
+       )
 }
