@@ -48,7 +48,7 @@ fun HomeScreen(
     val topBarColor    = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
     val titleTextColor = if (isDarkTheme) Color.White else Color.Black
 
-    // snackbars
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope             = rememberCoroutineScope()
 
@@ -199,7 +199,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // — new bit: only show when user is logged in —
+
                 if (user != null) {
                     val sortedFavs = user
                         .favourites
@@ -258,7 +258,7 @@ fun HomeScreen(
                         }
                     }
                 }
-                // — end new bit —
+
 
                 Text(
                     text     = "Powered by Artsy",
@@ -274,11 +274,11 @@ fun HomeScreen(
 
 private fun timeAgo(iso: String, now: Instant): String {
     val then = Instant.parse(iso)
-    val diff = Duration.between(then, now).seconds
+    val timediff = Duration.between(then, now).seconds
     return when {
-        diff < 60     -> "$diff seconds ago"
-        diff < 3_600  -> "${diff / 60} minutes ago"
-        diff < 86_400 -> "${diff / 3_600} hours ago"
-        else          -> "${diff / 86_400} days ago"
+        timediff < 60     -> "$timediff seconds ago"
+        timediff < 3_600  -> "${timediff / 60} minutes ago"
+        timediff < 86_400 -> "${timediff / 3_600} hours ago"
+        else          -> "${timediff / 86_400} days ago"
     }
 }

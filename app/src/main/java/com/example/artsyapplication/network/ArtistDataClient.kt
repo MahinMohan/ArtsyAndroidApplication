@@ -6,12 +6,12 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// ── model for the GET /api/artistdata response ────────────────────────
+
 data class ArtistDataResponse(
     val id:          String,
     val name:        String,
-    val birthday:    String,   // e.g. "1881"
-    val deathday:    String,   // e.g. "1973"
+    val birthday:    String,
+    val deathday:    String,
     val nationality: String
 )
 

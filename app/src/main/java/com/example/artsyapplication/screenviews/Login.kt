@@ -222,7 +222,7 @@ fun LoginScreen(
                                         gravatar   = obj.getString("gravatar"),
                                         favourites = emptyList()
                                     )
-                                    // show snackbar on success
+
                                     snackbarHostState.showSnackbar("Logged in successfully")
                                     onLoginSuccess(user)
                                 }

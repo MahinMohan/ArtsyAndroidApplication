@@ -62,7 +62,7 @@ fun ArtistInfo(artistId: String) {
         }
     }
 
-    // Always fill background immediately
+
     Box(
         Modifier
             .fillMaxSize()

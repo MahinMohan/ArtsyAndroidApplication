@@ -47,10 +47,10 @@ fun ArtistDetailsScreen(
     onFavoriteAdded    : (Favorite) -> Unit,
     onFavoriteRemoved  : (String) -> Unit
 ) {
-    // host for bottom snackbars
+
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // dynamic top bar color based on dark theme
+
     val isDarkTheme = isSystemInDarkTheme()
     val topBarColor = if (isDarkTheme) Color(0xFF223D6B) else Color(0xFFbfcdf2)
 
@@ -150,7 +150,7 @@ fun ArtistDetailsScreen(
             }
         }
 
-        // bottom-aligned snackbar host
+
         SnackbarHost(
             hostState = snackbarHostState,
             modifier  = Modifier

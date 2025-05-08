@@ -30,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
@@ -358,6 +359,7 @@ fun ArtistCard(
                 Text(
                     text  = artist.title ?: "",
                     style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Bold,
                         color = if (isDarkTheme) Color.White else Color.Black
                     )
                 )

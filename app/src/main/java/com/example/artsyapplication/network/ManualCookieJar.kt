@@ -8,7 +8,6 @@ import okhttp3.HttpUrl
 class ManualCookieJar(context: Context) : CookieJar {
     private val prefs = context
         .getSharedPreferences("cookie_prefs", Context.MODE_PRIVATE)
-    // key = cookie.name@cookie.domain, value = cookie.toString()
     private val cache = mutableMapOf<String, String>()
 
     init {
@@ -25,7 +24,6 @@ class ManualCookieJar(context: Context) : CookieJar {
             val key = "${c.name}@${c.domain}"
             cache[key] = c.toString()
         }
-        // persist
         val set = cache.entries.map { "${it.key}=${it.value}" }.toSet()
         prefs.edit().putStringSet("cookies", set).apply()
     }

@@ -8,7 +8,6 @@ object Network {
     lateinit var cookieJar: ManualCookieJar
 
     fun init(context: Context) {
-        // create the jar once so we can clear it on logout
         cookieJar = ManualCookieJar(context)
         client    = OkHttpClient.Builder()
             .cookieJar(cookieJar)

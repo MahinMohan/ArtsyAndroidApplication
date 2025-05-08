@@ -54,7 +54,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// ── model defs ──────────────────────────────────────────────────────────
+
 data class SimilarArtist(
     @SerializedName("name")   val name:  String?,
     @SerializedName("_links") val links: Links?
@@ -93,14 +93,14 @@ fun Similarartists(
     onFavoriteRemoved  : (String) -> Unit
 ) {
     val similarResults    = remember { mutableStateOf<List<SimilarArtist>>(emptyList()) }
-    val isLoading         = remember { mutableStateOf(true) }                  // ← added
+    val isLoading         = remember { mutableStateOf(true) }
     val coroutineScope    = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    val isDarkTheme       = isSystemInDarkTheme()                              // ← added
+    val isDarkTheme       = isSystemInDarkTheme()
     val pillColor         = if (isDarkTheme)
         Color(0xFF223D6B).copy(alpha = 0.3f)
     else
-        Color(0xFFbfcdf2).copy(alpha = 0.3f)                                  // ← added
+        Color(0xFFbfcdf2).copy(alpha = 0.3f)
 
     LaunchedEffect(artistId) {
         try {
@@ -111,14 +111,14 @@ fun Similarartists(
         } catch (_: Exception) {
             similarResults.value = emptyList()
         } finally {
-            isLoading.value = false                                          // ← added
+            isLoading.value = false
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when {
             isLoading.value -> {
-                // spinner until data loads
+
                 Column(
                     modifier            = Modifier
                         .fillMaxWidth()
@@ -131,7 +131,7 @@ fun Similarartists(
                 }
             }
             similarResults.value.isEmpty() -> {
-                // styled alert when no similar artists
+
                 Column(
                     modifier            = Modifier
                         .fillMaxWidth()
@@ -156,7 +156,7 @@ fun Similarartists(
                 }
             }
             else -> {
-                // display list when data present
+
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(similarResults.value) { artist ->
                         val href  = artist.links?.self?.href.orEmpty()
@@ -214,7 +214,7 @@ fun Similarartists(
             }
         }
 
-        // bottom-aligned SnackbarHost
+
         SnackbarHost(
             hostState = snackbarHostState,
             modifier  = Modifier

@@ -269,7 +269,7 @@ fun RegisterScreen(
                                     registerError = obj.getString("message")
                                 }
                                 obj.has("_id") -> {
-                                    // Successful registration
+
                                     val user = LoggedInUser(
                                         _id      = obj.getString("_id"),
                                         fullname = obj.getString("fullname"),
@@ -303,7 +303,7 @@ fun RegisterScreen(
                 }
             }
 
-            // only show non-email errors here
+
             registerError?.let { msg ->
                 if (!msg.contains("email", true)) {
                     Text(

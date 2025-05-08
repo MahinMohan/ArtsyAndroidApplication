@@ -1,6 +1,4 @@
-// MainActivity.kt
 package com.example.artsyapplication
-
 import android.os.Bundle
 import android.net.Uri
 import android.util.Log
@@ -31,13 +29,13 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 
-// ── models for API /api/me ───────────────────────────────────────────────
+
 data class Favorite(
     val artistId:    String,
     val title:       String,
     val birthyear:   String,
     val nationality: String,
-    val addedAt:     String // ISO timestamp
+    val addedAt:     String
 )
 
 data class LoggedInUser(
@@ -84,7 +82,7 @@ fun AppRouter() {
     var currentUser by remember { mutableStateOf<LoggedInUser?>(null) }
     var meChecked   by remember { mutableStateOf(false) }
 
-    // initial /api/me call
+
     LaunchedEffect(Unit) {
         try {
             val resp = MeClient.api.me()

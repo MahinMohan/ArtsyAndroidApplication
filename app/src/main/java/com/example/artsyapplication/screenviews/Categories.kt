@@ -197,10 +197,7 @@ fun Categories(
                                                 .verticalScroll(scroll)
                                                 .padding(horizontal = 12.dp)
                                         ) {
-//                                            Text(
-//                                                gene.description.orEmpty(),
-//                                                style = MaterialTheme.typography.bodyMedium
-//                                            )
+
                                             RedirectHyperLinkCateg(gene.description.toString())
                                         }
                                     }
