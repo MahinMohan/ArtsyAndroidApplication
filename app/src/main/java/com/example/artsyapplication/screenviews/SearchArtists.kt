@@ -103,18 +103,22 @@ fun SearchArtistsScreen(
     val placeholderColor = if (isDarkTheme) Color.White else Color.DarkGray
 
     val searchResults    = remember { mutableStateOf<List<Artist>>(emptyList()) }
+    val isLoading        = remember { mutableStateOf(false) }
     val coroutineScope   = rememberCoroutineScope()
 
     LaunchedEffect(searchText) {
         if (searchText.length >= 3) {
+            isLoading.value = true
             searchResults.value = try {
                 val resp = RetrofitClient.instance.searchArtists(searchText)
                 if (resp.isSuccessful) resp.body()!! else emptyList()
             } catch (_: Exception) {
                 emptyList()
             }
+            isLoading.value = false
         } else {
             searchResults.value = emptyList()
+            isLoading.value = false
         }
     }
 
@@ -165,63 +169,80 @@ fun SearchArtistsScreen(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            items(searchResults.value) { artist ->
-                val artistId = artist.links?.self?.href?.substringAfterLast("/") ?: ""
-                val isFav    = user?.favourites?.any { it.artistId == artistId } == true
+            if (isLoading.value) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Loading..")
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(searchResults.value) { artist ->
+                        val artistId = artist.links?.self?.href?.substringAfterLast("/") ?: ""
+                        val isFav    = user?.favourites?.any { it.artistId == artistId } == true
 
-                ArtistCard(
-                    artist           = artist,
-                    onDetailsClick   = {
-                        if (artistId.isNotEmpty())
-                            onArtistSelected(artistId, artist.title ?: "Unknown")
-                    },
-                    user             = user,
-                    onAddToFavorites = {
-                        if (user != null) {
-                            coroutineScope.launch {
-                                if (isFav) {
-                                    try {
-                                        DeleteFavouritesClient
-                                            .api
-                                            .deleteFavourite(DeleteFavouriteRequest(id = artistId))
-                                        onFavoriteRemoved(artistId)
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
+                        ArtistCard(
+                            artist           = artist,
+                            onDetailsClick   = {
+                                if (artistId.isNotEmpty())
+                                    onArtistSelected(artistId, artist.title ?: "Unknown")
+                            },
+                            user             = user,
+                            onAddToFavorites = {
+                                if (user != null) {
+                                    coroutineScope.launch {
+                                        if (isFav) {
+                                            try {
+                                                DeleteFavouritesClient
+                                                    .api
+                                                    .deleteFavourite(DeleteFavouriteRequest(id = artistId))
+                                                onFavoriteRemoved(artistId)
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                            }
+                                        } else {
+                                            val resp = ArtistDataClient.api.getArtistData(artistId)
+                                            if (!resp.isSuccessful) return@launch
+                                            val data = resp.body()!!
+                                            FavouritesClient.api.addToFavorites(
+                                                AddFavouriteRequest(
+                                                    artistId    = data.id,
+                                                    title       = data.name,
+                                                    birthyear   = data.birthday,
+                                                    deathyear   = data.deathday,
+                                                    nationality = data.nationality,
+                                                    image       = artist.links?.thumbnail?.href.orEmpty()
+                                                )
+                                            )
+                                            onFavoriteAdded(
+                                                Favorite(
+                                                    artistId    = data.id,
+                                                    title       = data.name,
+                                                    birthyear   = data.birthday,
+                                                    nationality = data.nationality,
+                                                    addedAt     = Instant.now().toString()
+                                                )
+                                            )
+                                        }
                                     }
-                                } else {
-                                    val resp = ArtistDataClient.api.getArtistData(artistId)
-                                    if (!resp.isSuccessful) return@launch
-                                    val data = resp.body()!!
-                                    FavouritesClient.api.addToFavorites(
-                                        AddFavouriteRequest(
-                                            artistId    = data.id,
-                                            title       = data.name,
-                                            birthyear   = data.birthday,
-                                            deathyear   = data.deathday,
-                                            nationality = data.nationality,
-                                            image       = artist.links?.thumbnail?.href.orEmpty()
-                                        )
-                                    )
-                                    onFavoriteAdded(
-                                        Favorite(
-                                            artistId    = data.id,
-                                            title       = data.name,
-                                            birthyear   = data.birthday,
-                                            nationality = data.nationality,
-                                            addedAt     = Instant.now().toString()
-                                        )
-                                    )
                                 }
-                            }
-                        }
-                    },
-                    isDarkTheme      = isDarkTheme
-                )
+                            },
+                            isDarkTheme      = isDarkTheme
+                        )
+                    }
+                }
             }
         }
     }
