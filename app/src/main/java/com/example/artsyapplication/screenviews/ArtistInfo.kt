@@ -107,7 +107,7 @@ fun ArtistInfo(artistId: String) {
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = it.biography,
+                        text = it.biography.replace("-\\s+".toRegex(),"").replace("\\s*\\n+".toRegex(),"\n\n"),
                         color = if (isDarkTheme) Color.White else Color.Black,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Justify
