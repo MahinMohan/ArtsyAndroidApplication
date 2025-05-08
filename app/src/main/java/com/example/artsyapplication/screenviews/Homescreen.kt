@@ -43,12 +43,12 @@ fun HomeScreen(
     onFavoriteAdded: (Favorite) -> Unit,
     onFavoriteRemoved: (String) -> Unit
 ) {
-    val topBarBlue       = Color(0xFFbfcdf2)
-    val isDarkTheme      = isSystemInDarkTheme()
-    val topBarColor      = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
-    val titleTextColor   = if (isDarkTheme) Color.White else Color.Black
+    val topBarBlue     = Color(0xFFbfcdf2)
+    val isDarkTheme    = isSystemInDarkTheme()
+    val topBarColor    = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
+    val titleTextColor = if (isDarkTheme) Color.White else Color.Black
 
-    // Added for snackbars
+    // snackbars
     val snackbarHostState = remember { SnackbarHostState() }
     val scope             = rememberCoroutineScope()
 
@@ -116,7 +116,7 @@ fun HomeScreen(
                                             onDeleteAccount()
                                             menuExpanded = false
                                             scope.launch {
-                                                snackbarHostState.showSnackbar("Deleted account successfully")
+                                                snackbarHostState.showSnackbar("Deleted user successfully")
                                             }
                                         }
                                     )
@@ -199,40 +199,66 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                user?.favourites?.forEach { fav ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onArtistSelected(fav.artistId, fav.title) }
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text  = fav.title,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                text = listOfNotNull(
-                                    fav.nationality.takeIf(String::isNotBlank),
-                                    fav.birthyear.takeIf(String::isNotBlank)
-                                ).joinToString(", "),
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                // — new bit: only show when user is logged in —
+                if (user != null) {
+                    val sortedFavs = user
+                        .favourites
+                        .sortedByDescending { Instant.parse(it.addedAt) }
+
+                    if (sortedFavs.isEmpty()) {
+                        Surface(
+                            color    = topBarBlue,
+                            shape    = RoundedCornerShape(24.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .height(48.dp)
+                        ) {
+                            Box(
+                                Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No favorites")
+                            }
                         }
+                    } else {
+                        sortedFavs.forEach { fav ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onArtistSelected(fav.artistId, fav.title) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text  = fav.title,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                    Text(
+                                        text = listOfNotNull(
+                                            fav.nationality.takeIf(String::isNotBlank),
+                                            fav.birthyear.takeIf(String::isNotBlank)
+                                        ).joinToString(", "),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
 
-                        Text(
-                            text  = timeAgo(fav.addedAt, now),
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                                Text(
+                                    text  = timeAgo(fav.addedAt, now),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
 
-                        Icon(
-                            imageVector        = Icons.Filled.ArrowForward,
-                            contentDescription = "Go to details",
-                            modifier           = Modifier.padding(start = 8.dp)
-                        )
+                                Icon(
+                                    imageVector        = Icons.Filled.ArrowForward,
+                                    contentDescription = "Go to details",
+                                    modifier           = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
                     }
                 }
+                // — end new bit —
 
                 Text(
                     text     = "Powered by Artsy",

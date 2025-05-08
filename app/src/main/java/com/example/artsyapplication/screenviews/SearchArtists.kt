@@ -273,7 +273,7 @@ fun ArtistCard(
                 ) {
                     Icon(
                         imageVector        = if (isFav) Icons.Filled.Star else Icons.Filled.StarBorder,
-                        tint               = if (isFav) Color.White else Color.Gray,
+                        tint               = if (isFav) Color.Black else Color.Gray,
                         contentDescription = if (isFav) "Remove from favorites" else "Add to favorites"
                     )
                 }
