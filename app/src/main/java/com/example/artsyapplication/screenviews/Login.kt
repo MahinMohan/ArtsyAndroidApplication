@@ -3,6 +3,7 @@ package com.example.artsyapplication.screenviews
 
 import android.util.Patterns
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -54,6 +55,8 @@ object LoginClient {
     }
 }
 
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
@@ -63,6 +66,8 @@ fun LoginScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val topBarBlue   = Color(0xFFbfcdf2)
+    val isDarkTheme    = isSystemInDarkTheme()
+    val topBarColor    = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
 
     var email          by remember { mutableStateOf("") }
     var emailError     by remember { mutableStateOf<String?>(null) }
@@ -91,7 +96,7 @@ fun LoginScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = smallTopAppBarColors(containerColor = topBarBlue)
+                colors = smallTopAppBarColors(containerColor = topBarColor)
             )
         }
     ) { innerPadding ->

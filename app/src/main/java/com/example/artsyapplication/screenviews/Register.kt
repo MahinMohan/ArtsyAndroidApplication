@@ -2,12 +2,14 @@ package com.example.artsyapplication.screenviews
 
 import android.util.Patterns
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.smallTopAppBarColors
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -62,6 +64,8 @@ fun RegisterScreen(
 ) {
     val focusManager      = LocalFocusManager.current
     val topBarBlue        = Color(0xFFbfcdf2)
+    val isDarkTheme    = isSystemInDarkTheme()
+    val topBarColor    = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
     val snackbarHostState = remember { SnackbarHostState() }
     val scope             = rememberCoroutineScope()
 
@@ -93,10 +97,10 @@ fun RegisterScreen(
                 title          = { Text("Register") },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = smallTopAppBarColors(containerColor = topBarBlue)
+                colors = smallTopAppBarColors(containerColor = topBarColor)
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -254,7 +258,7 @@ fun RegisterScreen(
                             val obj = JSONObject(body)
                             when {
                                 obj.has("message") -> {
-                                    // Backend returned user‑exists or other error
+
                                     registerError = obj.getString("message")
                                 }
                                 obj.has("_id") -> {
