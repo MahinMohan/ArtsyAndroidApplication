@@ -1,11 +1,11 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.example.artsyapplication.screenviews
 
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,10 +13,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -89,8 +92,15 @@ fun Similarartists(
     onFavoriteAdded    : (Favorite) -> Unit,
     onFavoriteRemoved  : (String) -> Unit
 ) {
-    val similarResults = remember { mutableStateOf<List<SimilarArtist>>(emptyList()) }
-    val coroutineScope = rememberCoroutineScope()
+    val similarResults    = remember { mutableStateOf<List<SimilarArtist>>(emptyList()) }
+    val isLoading         = remember { mutableStateOf(true) }                  // ← added
+    val coroutineScope    = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val isDarkTheme       = isSystemInDarkTheme()                              // ← added
+    val pillColor         = if (isDarkTheme)
+        Color(0xFF223D6B).copy(alpha = 0.3f)
+    else
+        Color(0xFFbfcdf2).copy(alpha = 0.3f)                                  // ← added
 
     LaunchedEffect(artistId) {
         try {
@@ -100,62 +110,117 @@ fun Similarartists(
                 else emptyList()
         } catch (_: Exception) {
             similarResults.value = emptyList()
+        } finally {
+            isLoading.value = false                                          // ← added
         }
     }
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(similarResults.value) { artist ->
-            val href  = artist.links?.self?.href.orEmpty()
-            val id    = href.substringAfterLast("/")
-            val name  = artist.name.orEmpty()
-            val isFav = user?.favourites?.any { it.artistId == id } == true
-
-            SimilarArtistCard(
-                similarArtist    = artist,
-                onClick          = { navController.navigate("artistDetails/$id/${Uri.encode(name)}") },
-                user             = user,
-                onAddOrRemove    = {
-                    coroutineScope.launch {
-                        if (isFav) {
-                            // —— remove
-                            try {
-                                DeleteFavouritesClient
-                                    .api
-                                    .deleteFavourite(DeleteFavouriteRequest(id = id))
-                                onFavoriteRemoved(id)
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        } else {
-                            // —— add
-                            val resp2 = ArtistDataClient.api.getArtistData(id)
-                            if (!resp2.isSuccessful) return@launch
-                            val data = resp2.body()!!
-                            FavouritesClient.api.addToFavorites(
-                                AddFavouriteRequest(
-                                    artistId    = data.id,
-                                    title       = data.name,
-                                    birthyear   = data.birthday,
-                                    deathyear   = data.deathday,
-                                    nationality = data.nationality,
-                                    image       = artist.links?.thumbnail?.href.orEmpty()
-                                )
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            isLoading.value -> {
+                // spinner until data loads
+                Column(
+                    modifier            = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Loading...")
+                }
+            }
+            similarResults.value.isEmpty() -> {
+                // styled alert when no similar artists
+                Column(
+                    modifier            = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .background(color = pillColor, shape = RoundedCornerShape(12.dp))
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No similar artists",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                color = if (isDarkTheme) Color.White else Color.Black
                             )
-                            onFavoriteAdded(
-                                Favorite(
-                                    artistId    = data.id,
-                                    title       = data.name,
-                                    birthyear   = data.birthday,
-                                    nationality = data.nationality,
-                                    addedAt     = Instant.now().toString()
-                                )
-                            )
-                        }
+                        )
                     }
-                },
-                isFav            = isFav
-            )
+                }
+            }
+            else -> {
+                // display list when data present
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(similarResults.value) { artist ->
+                        val href  = artist.links?.self?.href.orEmpty()
+                        val id    = href.substringAfterLast("/")
+                        val name  = artist.name.orEmpty()
+                        val isFav = user?.favourites?.any { it.artistId == id } == true
+
+                        SimilarArtistCard(
+                            similarArtist = artist,
+                            onClick       = { navController.navigate("artistDetails/$id/${Uri.encode(name)}") },
+                            user          = user,
+                            onAddOrRemove = {
+                                coroutineScope.launch {
+                                    if (isFav) {
+                                        try {
+                                            DeleteFavouritesClient
+                                                .api
+                                                .deleteFavourite(DeleteFavouriteRequest(id = id))
+                                            onFavoriteRemoved(id)
+                                            snackbarHostState.showSnackbar("Removed from Favourites")
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                        }
+                                    } else {
+                                        val resp2 = ArtistDataClient.api.getArtistData(id)
+                                        if (!resp2.isSuccessful) return@launch
+                                        val data = resp2.body()!!
+                                        FavouritesClient.api.addToFavorites(
+                                            AddFavouriteRequest(
+                                                artistId    = data.id,
+                                                title       = data.name,
+                                                birthyear   = data.birthday,
+                                                deathyear   = data.deathday,
+                                                nationality = data.nationality,
+                                                image       = artist.links?.thumbnail?.href.orEmpty()
+                                            )
+                                        )
+                                        onFavoriteAdded(
+                                            Favorite(
+                                                artistId    = data.id,
+                                                title       = data.name,
+                                                birthyear   = data.birthday,
+                                                nationality = data.nationality,
+                                                addedAt     = Instant.now().toString()
+                                            )
+                                        )
+                                        snackbarHostState.showSnackbar("Added to Favourites")
+                                    }
+                                }
+                            },
+                            isFav = isFav
+                        )
+                    }
+                }
+            }
         }
+
+        // bottom-aligned SnackbarHost
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier  = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
+        )
     }
 }
 

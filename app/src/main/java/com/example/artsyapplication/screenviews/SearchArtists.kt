@@ -26,6 +26,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -96,15 +98,19 @@ fun SearchArtistsScreen(
     onFavoriteAdded    : (Favorite) -> Unit,
     onFavoriteRemoved  : (String) -> Unit
 ) {
-    val topBarBlue       = Color(0xFFbfcdf2)
-    val isDarkTheme      = isSystemInDarkTheme()
-    val topBarColor      = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
-    val textColor        = if (isDarkTheme) Color.White else Color.Black
-    val placeholderColor = if (isDarkTheme) Color.White else Color.DarkGray
+    val topBarBlue        = Color(0xFFbfcdf2)
+    val isDarkTheme       = isSystemInDarkTheme()
+    val topBarColor       = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
+    val textColor         = if (isDarkTheme) Color.White else Color.Black
+    val placeholderColor  = if (isDarkTheme) Color.White else Color.DarkGray
 
-    val searchResults    = remember { mutableStateOf<List<Artist>>(emptyList()) }
-    val isLoading        = remember { mutableStateOf(false) }
-    val coroutineScope   = rememberCoroutineScope()
+    val searchResults     = remember { mutableStateOf<List<Artist>>(emptyList()) }
+    val isLoading         = remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope    = rememberCoroutineScope()
+
+    val focusManager      = LocalFocusManager.current
+    val keyboardController= LocalSoftwareKeyboardController.current
 
     LaunchedEffect(searchText) {
         if (searchText.length >= 3) {
@@ -123,6 +129,7 @@ fun SearchArtistsScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor),
@@ -147,7 +154,12 @@ fun SearchArtistsScreen(
                             unfocusedPlaceholderColor = placeholderColor
                         ),
                         keyboardOptions     = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                        keyboardActions     = KeyboardActions(onSearch = {})
+                        keyboardActions     = KeyboardActions(
+                            onSearch = {
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                            }
+                        )
                     )
                 },
                 navigationIcon = {
@@ -176,7 +188,7 @@ fun SearchArtistsScreen(
         ) {
             if (isLoading.value) {
                 Column(
-                    modifier = Modifier
+                    modifier            = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -209,6 +221,7 @@ fun SearchArtistsScreen(
                                                     .api
                                                     .deleteFavourite(DeleteFavouriteRequest(id = artistId))
                                                 onFavoriteRemoved(artistId)
+                                                snackbarHostState.showSnackbar("Removed from Favourites")
                                             } catch (e: Exception) {
                                                 e.printStackTrace()
                                             }
@@ -235,6 +248,7 @@ fun SearchArtistsScreen(
                                                     addedAt     = Instant.now().toString()
                                                 )
                                             )
+                                            snackbarHostState.showSnackbar("Added to Favourites")
                                         }
                                     }
                                 }

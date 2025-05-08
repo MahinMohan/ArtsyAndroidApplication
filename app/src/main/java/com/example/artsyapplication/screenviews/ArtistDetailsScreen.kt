@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
 package com.example.artsyapplication.screenviews
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -12,12 +13,15 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -43,7 +47,10 @@ fun ArtistDetailsScreen(
     onFavoriteAdded    : (Favorite) -> Unit,
     onFavoriteRemoved  : (String) -> Unit
 ) {
-    // only change: dynamic top bar color based on dark theme
+    // host for bottom snackbars
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // dynamic top bar color based on dark theme
     val isDarkTheme = isSystemInDarkTheme()
     val topBarColor = if (isDarkTheme) Color(0xFF223D6B) else Color(0xFFbfcdf2)
 
@@ -74,6 +81,7 @@ fun ArtistDetailsScreen(
                                         .api
                                         .deleteFavourite(DeleteFavouriteRequest(id = artistId))
                                     onFavoriteRemoved(artistId)
+                                    snackbarHostState.showSnackbar("Removed from Favourites")
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }
@@ -100,6 +108,7 @@ fun ArtistDetailsScreen(
                                         addedAt     = Instant.now().toString()
                                     )
                                 )
+                                snackbarHostState.showSnackbar("Added to Favourites")
                             }
                         }
                     }) {
@@ -115,30 +124,38 @@ fun ArtistDetailsScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        tabBar()
-
-        TabRow(selectedTabIndex = selectedTabIndex) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTabIndex == index,
-                    onClick  = { selectedTabIndex = index },
-                    icon     = { Icon(icons[index], contentDescription = title) },
-                    text     = { Text(title) }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            tabBar()
+            TabRow(selectedTabIndex = selectedTabIndex) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTabIndex == index,
+                        onClick  = { selectedTabIndex = index },
+                        icon     = { Icon(icons[index], contentDescription = title) },
+                        text     = { Text(title) }
+                    )
+                }
+            }
+            when (selectedTabIndex) {
+                0 -> ArtistInfo(artistId)
+                1 -> Artworks(artistId)
+                2 -> if (user != null) Similarartists(
+                    artistId           = artistId,
+                    navController      = navController,
+                    user               = user,
+                    onFavoriteAdded    = onFavoriteAdded,
+                    onFavoriteRemoved  = onFavoriteRemoved
                 )
             }
         }
 
-        when (selectedTabIndex) {
-            0 -> ArtistInfo(artistId)
-            1 -> Artworks(artistId)
-            2 -> if (user != null) Similarartists(
-                artistId           = artistId,
-                navController      = navController,
-                user               = user,
-                onFavoriteAdded    = onFavoriteAdded,
-                onFavoriteRemoved  = onFavoriteRemoved
-            )
-        }
+        // bottom-aligned snackbar host
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier  = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
+        )
     }
 }
