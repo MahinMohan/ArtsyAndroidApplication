@@ -154,7 +154,9 @@ fun SearchArtistsScreen(
                             unfocusedContainerColor   = topBarColor,
                             cursorColor               = textColor,
                             focusedPlaceholderColor   = placeholderColor,
-                            unfocusedPlaceholderColor = placeholderColor
+                            unfocusedPlaceholderColor = placeholderColor,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
                         ),
                         keyboardOptions     = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
                         keyboardActions     = KeyboardActions(

@@ -23,7 +23,6 @@ import androidx.compose.ui.zIndex
 import coil.compose.rememberAsyncImagePainter
 import com.example.artsyapplication.R
 import com.google.gson.annotations.SerializedName
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -40,7 +39,14 @@ data class EmbeddedGenes(
 data class CategoryData(
     @SerializedName("name")        val name:        String,
     @SerializedName("description") val description: String?,
-    @SerializedName("_links")      val links:       Links?
+    @SerializedName("_links")      val links:       CategoryLinks?
+)
+
+data class CategoryLinks(
+    @SerializedName("thumbnail") val thumbnail: CategoryHref?
+)
+data class CategoryHref(
+    @SerializedName("href") val href: String
 )
 
 private interface GenesApiService {
@@ -62,7 +68,6 @@ fun Categories(
     onDismiss: () -> Unit
 ) {
     var isLoading by remember { mutableStateOf(true) }
-    var index     by remember { mutableStateOf(0) }
 
     val genes by produceState<List<CategoryData>>(initialValue = emptyList(), artworkId) {
         isLoading = true
@@ -99,7 +104,13 @@ fun Categories(
                                 .height(200.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Loading…", style = MaterialTheme.typography.bodyMedium)
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                CircularProgressIndicator()
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Loading..", style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
                     }
                     genes.isEmpty() -> {
@@ -121,33 +132,30 @@ fun Categories(
                         ) {
                             val pagestate = rememberPagerState(initialPage = 0) { genes.size }
                             val coroutineScope = rememberCoroutineScope()
-                            IconButton(
-                                onClick = { if(pagestate.currentPage==0){
-                                    coroutineScope.launch {
-                                        pagestate.animateScrollToPage(pagestate.currentPage+genes.size-1)
-                                    }
-                                }
-                                    else if(pagestate.currentPage > 0){
-                                    coroutineScope.launch {
-                                        pagestate.animateScrollToPage(pagestate.currentPage-1)
-                                    }
-                                } },
 
-                                modifier = Modifier.align(Alignment.CenterStart).zIndex(2F)
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        val prev = if (pagestate.currentPage == 0) genes.lastIndex else pagestate.currentPage - 1
+                                        pagestate.animateScrollToPage(prev)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.CenterStart)
+                                    .zIndex(2f)
                             ) {
                                 Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous")
                             }
 
-                            HorizontalPager(state = pagestate,
-                                contentPadding= PaddingValues(horizontal = 18.dp),
-                                pageSpacing = 2.dp) {
-                                page ->
+                            HorizontalPager(
+                                state = pagestate,
+                                contentPadding = PaddingValues(horizontal = 18.dp),
+                                pageSpacing = 2.dp
+                            ) { page ->
                                 val gene = genes[page]
                                 Card(
                                     shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Column {
                                         val thumbUrl = gene.links?.thumbnail?.href
@@ -185,20 +193,17 @@ fun Categories(
                                     }
                                 }
                             }
+
                             IconButton(
                                 onClick = {
-                                    if(pagestate.currentPage==genes.size-1){
-                                        coroutineScope.launch {
-                                            pagestate.animateScrollToPage(pagestate.currentPage-genes.size+1)
-                                        }
-                                    }
-
-                                    else if(pagestate.currentPage < genes.lastIndex){
                                     coroutineScope.launch {
-                                        pagestate.animateScrollToPage(pagestate.currentPage+1)
+                                        val next = if (pagestate.currentPage == genes.lastIndex) 0 else pagestate.currentPage + 1
+                                        pagestate.animateScrollToPage(next)
                                     }
-                                } },
-                                modifier = Modifier.align(Alignment.CenterEnd).zIndex(2F)
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .zIndex(2f)
                             ) {
                                 Icon(Icons.Filled.ChevronRight, contentDescription = "Next")
                             }
