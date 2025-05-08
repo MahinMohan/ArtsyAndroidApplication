@@ -21,12 +21,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.example.artsyapplication.Favorite
 import com.example.artsyapplication.LoggedInUser
 import com.example.artsyapplication.network.Network
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
+import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -216,11 +218,23 @@ fun LoginScreen(
                                     loginError = obj.getString("message")
                                 }
                                 obj.has("_id") -> {
+                                    val favsJson = obj.optJSONArray("favourites") ?: JSONArray()
+                                    val favsList = mutableListOf<Favorite>()
+                                    for (i in 0 until favsJson.length()) {
+                                        val f = favsJson.getJSONObject(i)
+                                        favsList += Favorite(
+                                            artistId    = f.optString("artistId",""),
+                                            title       = f.optString("title",""),
+                                            birthyear   = f.optString("birthyear",""),
+                                            nationality = f.optString("nationality",""),
+                                            addedAt     = f.optString("addedAt","")
+                                        )
+                                    }
                                     val user = LoggedInUser(
                                         _id        = obj.getString("_id"),
                                         fullname   = obj.getString("fullname"),
                                         gravatar   = obj.getString("gravatar"),
-                                        favourites = emptyList()
+                                        favourites = favsList
                                     )
 
                                     snackbarHostState.showSnackbar("Logged in successfully")

@@ -1,4 +1,5 @@
 package com.example.artsyapplication
+
 import android.os.Bundle
 import android.net.Uri
 import android.util.Log
@@ -28,7 +29,6 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-
 
 data class Favorite(
     val artistId:    String,
@@ -82,7 +82,7 @@ fun AppRouter() {
     var currentUser by remember { mutableStateOf<LoggedInUser?>(null) }
     var meChecked   by remember { mutableStateOf(false) }
 
-
+    // Initial session restore
     LaunchedEffect(Unit) {
         try {
             val resp = MeClient.api.me()
@@ -121,37 +121,39 @@ fun AppRouter() {
         }
     }
 
+    // Don’t render routes until we know session state
     if (!meChecked) return
 
     NavHost(navController = navController, startDestination = "home") {
+        // Home route stays unchanged
         composable("home") {
             HomeScreen(
-                user               = currentUser,
-                onLogin            = { navController.navigate("login") },
-                onLogout           = {
+                user             = currentUser,
+                onLogin          = { navController.navigate("login") },
+                onLogout         = {
                     scope.launch {
                         runCatching { LogoutClient.api.logout() }
                         Network.cookieJar.clear()
                         currentUser = null
                     }
                 },
-                onDeleteAccount    = {
+                onDeleteAccount  = {
                     scope.launch {
                         runCatching { DeleteAccountClient.api.deleteAccount() }
                         Network.cookieJar.clear()
                         currentUser = null
                     }
                 },
-                onArtistSelected   = { id, name ->
+                onArtistSelected = { id, name ->
                     val encodedName = Uri.encode(name)
                     navController.navigate("artistDetails/$id/$encodedName")
                 },
-                onFavoriteAdded    = { fav ->
+                onFavoriteAdded   = { fav ->
                     currentUser = currentUser?.copy(
                         favourites = currentUser!!.favourites + fav
                     )
                 },
-                onFavoriteRemoved  = { artistId ->
+                onFavoriteRemoved = { artistId ->
                     currentUser = currentUser?.copy(
                         favourites = currentUser!!.favourites.filterNot { it.artistId == artistId }
                     )
@@ -159,42 +161,12 @@ fun AppRouter() {
             )
         }
 
+        // Login: Option A → no /api/me, just use userFromLogin
         composable("login") {
             LoginScreen(
-                onLoginSuccess = {
-                    scope.launch {
-                        try {
-                            val resp = MeClient.api.me()
-                            val body = withContext(Dispatchers.IO) {
-                                resp.errorBody()?.string() ?: resp.body()?.string().orEmpty()
-                            }
-                            if (resp.code() == 200 && body.isNotBlank()) {
-                                val obj     = JSONObject(body)
-                                val message = obj.optString("message")
-                                if (message != "Access denied no token") {
-                                    val userJson = obj.getJSONObject("user")
-                                    val favsJson = userJson.optJSONArray("favourites") ?: JSONArray()
-                                    val favsList = mutableListOf<Favorite>()
-                                    for (i in 0 until favsJson.length()) {
-                                        val f = favsJson.getJSONObject(i)
-                                        favsList += Favorite(
-                                            artistId    = f.optString("artistId",""),
-                                            title       = f.optString("title",""),
-                                            birthyear   = f.optString("birthyear",""),
-                                            nationality = f.optString("nationality",""),
-                                            addedAt     = f.optString("addedAt","")
-                                        )
-                                    }
-                                    currentUser = LoggedInUser(
-                                        _id        = userJson.optString("_id",""),
-                                        fullname   = userJson.optString("fullname",""),
-                                        gravatar   = userJson.optString("gravatar",""),
-                                        favourites = favsList
-                                    )
-                                }
-                            }
-                        } catch (_: Exception) { }
-                    }
+                onLoginSuccess = { userFromLogin ->
+                    currentUser = userFromLogin
+                    Log.d("Logged in user","${currentUser}")
                     navController.popBackStack()
                 },
                 onCancel   = { navController.popBackStack() },
@@ -202,46 +174,14 @@ fun AppRouter() {
             )
         }
 
+        // Register: Option A → no /api/me, just use userFromRegister
         composable("register") {
             RegisterScreen(
-                onRegisterSuccess = {
-                    scope.launch {
-                        try {
-                            val resp = MeClient.api.me()
-                            val body = withContext(Dispatchers.IO) {
-                                resp.errorBody()?.string() ?: resp.body()?.string().orEmpty()
-                            }
-                            if (resp.code() == 200 && body.isNotBlank()) {
-                                val obj     = JSONObject(body)
-                                val message = obj.optString("message")
-                                if (message != "Access denied no token") {
-                                    val userJson = obj.getJSONObject("user")
-                                    val favsJson = userJson.optJSONArray("favourites") ?: JSONArray()
-                                    val favsList = mutableListOf<Favorite>()
-                                    for (i in 0 until favsJson.length()) {
-                                        val f = favsJson.getJSONObject(i)
-                                        favsList += Favorite(
-                                            artistId    = f.optString("artistId",""),
-                                            title       = f.optString("title",""),
-                                            birthyear   = f.optString("birthyear",""),
-                                            nationality = f.optString("nationality",""),
-                                            addedAt     = f.optString("addedAt","")
-                                        )
-                                    }
-                                    currentUser = LoggedInUser(
-                                        _id        = userJson.optString("_id",""),
-                                        fullname   = userJson.optString("fullname",""),
-                                        gravatar   = userJson.optString("gravatar",""),
-                                        favourites = favsList
-                                    )
-                                    navController.navigate("home") {
-                                        popUpTo("home") { inclusive = true }
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e("REGISTER", "Failed to fetch /api/me", e)
-                        }
+                onRegisterSuccess = { userFromRegister ->
+                    currentUser = userFromRegister
+                    Log.d("Registered user","${currentUser}")
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
                     }
                 },
                 onCancel = { navController.popBackStack() },
@@ -249,21 +189,22 @@ fun AppRouter() {
             )
         }
 
+        // Artist details route unchanged
         composable("artistDetails/{artistId}/{artistName}") { backStackEntry ->
             val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""
             ArtistDetailsScreen(
-                user               = currentUser,
-                artistId           = artistId,
-                artistName         = artistName,
-                navController      = navController,
-                onBack             = { navController.popBackStack() },
-                onFavoriteAdded    = { fav ->
+                user              = currentUser,
+                artistId          = artistId,
+                artistName        = artistName,
+                navController     = navController,
+                onBack            = { navController.popBackStack() },
+                onFavoriteAdded   = { fav ->
                     currentUser = currentUser?.copy(
                         favourites = currentUser!!.favourites + fav
                     )
                 },
-                onFavoriteRemoved  = { id ->
+                onFavoriteRemoved = { id ->
                     currentUser = currentUser?.copy(
                         favourites = currentUser!!.favourites.filterNot { it.artistId == id }
                     )
