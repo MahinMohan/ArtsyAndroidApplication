@@ -62,6 +62,9 @@ fun Artworks(artistId: String) {
     var isLoading by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
+    // NEW: track when the fetch has actually completed
+    var hasDataLoaded by remember { mutableStateOf(false) }
+
     val artworks by produceState<List<ArtworkData>>(initialValue = emptyList(), artistId) {
         isLoading = true
         errorMsg = null
@@ -76,6 +79,7 @@ fun Artworks(artistId: String) {
             errorMsg = e.localizedMessage
         } finally {
             isLoading = false
+            hasDataLoaded = true                    // mark that loading finished
         }
     }
 
@@ -85,6 +89,7 @@ fun Artworks(artistId: String) {
             .background(if (isDarkTheme) Color.Black else Color.Transparent)
     ) {
         when {
+            // still fetching
             isLoading -> Column(
                 Modifier
                     .fillMaxSize()
@@ -94,53 +99,54 @@ fun Artworks(artistId: String) {
             ) {
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Loading..", color = if (isDarkTheme) Color.White else Color.Black)
+                Text("Loading…", color = if (isDarkTheme) Color.White else Color.Black)
             }
+
+            // network/error state
             errorMsg != null -> Box(
                 Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = errorMsg!!)
             }
-            else -> {
-                if (artworks.isEmpty()) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        tonalElevation = 0.dp
-                    ) {
-                        Text(
-                            text = "No Artworks",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 12.dp)
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(artworks) { artwork ->
-                            ArtworkCard(
-                                artwork = artwork,
-                                onViewCategories = { id ->
-                                    selectedArtworkId = id
-                                    showCategories = true
-                                },
-                                isDarkTheme = isDarkTheme
-                            )
-                        }
-                    }
+
+            // only show list when we have items
+            artworks.isNotEmpty() -> LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(artworks) { artwork ->
+                    ArtworkCard(
+                        artwork = artwork,
+                        onViewCategories = { id ->
+                            selectedArtworkId = id
+                            showCategories = true
+                        },
+                        isDarkTheme = isDarkTheme
+                    )
                 }
+            }
+
+            // only show “No Artworks” if loading has completed and list is empty
+            hasDataLoaded -> Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                tonalElevation = 0.dp
+            ) {
+                Text(
+                    text = "No Artworks",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                )
             }
         }
 

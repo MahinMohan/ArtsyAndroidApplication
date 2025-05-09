@@ -1,5 +1,5 @@
 package com.example.artsyapplication.screenviews
-
+import androidx.compose.material3.ButtonDefaults
 import android.util.Patterns
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -124,15 +124,12 @@ fun LoginScreen(
                             if (!emailTouched) emailTouched = true
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-//                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-//                                    "Invalid email address"
+
                                 else -> null
                             }
                         } else if (emailTouched) {
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-//                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-//                                    "Invalid email address"
                                 else -> null
                             }
                         }
@@ -256,7 +253,11 @@ fun LoginScreen(
                     }
                 },
 //                enabled  = !isLoggingIn && formValid,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isLoggingIn) Color(0xFF86868B)
+                    else MaterialTheme.colorScheme.primary
+                )
             ) {
                 if (isLoggingIn) {
                     CircularProgressIndicator(

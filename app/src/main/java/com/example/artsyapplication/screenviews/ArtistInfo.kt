@@ -112,7 +112,7 @@ fun ArtistInfo(artistId: String) {
                                 && it.deathday.isBlank()
                                 && it.nationality.isNotBlank()
                             ) {
-                                // 2) no years, but nationality → "nationality, "
+
                                 "${it.nationality}, "
                             } else if (
                                 it.nationality.isBlank()

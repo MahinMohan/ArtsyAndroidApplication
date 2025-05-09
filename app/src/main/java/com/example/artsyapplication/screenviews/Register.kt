@@ -294,8 +294,12 @@ fun RegisterScreen(
                         isRegistering = false
                     }
                 },
-                enabled  = !isRegistering && formValid,
-                modifier = Modifier.fillMaxWidth()
+//                enabled  = !isRegistering && formValid,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isRegistering) Color(0xFF86868B)
+                    else MaterialTheme.colorScheme.primary
+                )
             ) {
                 if (isRegistering) {
                     CircularProgressIndicator(
