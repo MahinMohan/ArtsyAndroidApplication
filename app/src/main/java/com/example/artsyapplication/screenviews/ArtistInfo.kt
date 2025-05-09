@@ -100,7 +100,31 @@ fun ArtistInfo(artistId: String) {
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "${it.nationality}, ${it.birthday} - ${it.deathday}",
+                        text =
+                            if (it.nationality.isBlank()
+                                && it.birthday.isNotBlank()
+                                && it.deathday.isNotBlank()
+                            ) {
+                                // 1) no nationality, but both years → "birthday - deathday"
+                                "${it.birthday} - ${it.deathday}"
+                            } else if (
+                                it.birthday.isBlank()
+                                && it.deathday.isBlank()
+                                && it.nationality.isNotBlank()
+                            ) {
+                                // 2) no years, but nationality → "nationality, "
+                                "${it.nationality}, "
+                            } else if (
+                                it.nationality.isBlank()
+                                && it.birthday.isBlank()
+                                && it.deathday.isBlank()
+                            ) {
+                                // 3) nothing present → empty
+                                ""
+                            } else {
+                                // 4) all three present → "nationality, birthday - deathday"
+                                "${it.nationality}, ${it.birthday} - ${it.deathday}"
+                            },
                         color = if (isDarkTheme) Color.White else Color.Black,
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                         textAlign = TextAlign.Center
