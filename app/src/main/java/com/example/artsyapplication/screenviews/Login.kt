@@ -124,15 +124,15 @@ fun LoginScreen(
                             if (!emailTouched) emailTouched = true
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-                                    "Invalid email address"
+//                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+//                                    "Invalid email address"
                                 else -> null
                             }
                         } else if (emailTouched) {
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-                                    "Invalid email address"
+//                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+//                                    "Invalid email address"
                                 else -> null
                             }
                         }
@@ -195,6 +195,10 @@ fun LoginScreen(
 
             Button(
                 onClick = {
+                    if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+                        emailError = "Invalid email address"
+                        return@Button
+                    }
                     scope.launch {
                         isLoggingIn = true
                         loginError  = null
@@ -251,7 +255,7 @@ fun LoginScreen(
                         isLoggingIn = false
                     }
                 },
-                enabled  = !isLoggingIn && formValid,
+//                enabled  = !isLoggingIn && formValid,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (isLoggingIn) {

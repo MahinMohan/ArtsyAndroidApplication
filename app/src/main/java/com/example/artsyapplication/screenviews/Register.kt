@@ -166,14 +166,14 @@ fun RegisterScreen(
                             emailTouched = true
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-                                    "Invalid format"
+//                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+//                                    "Invalid format"
                                 else -> null}
                         } else if (emailTouched) {
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-                                    "Invalid format"
+//                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+//                                    "Invalid format"
                                 else -> null
                             }
                         }
@@ -243,6 +243,10 @@ fun RegisterScreen(
 
             Button(
                 onClick = {
+                    if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+                        emailError = "Invalid format"
+                        return@Button
+                    }
                     scope.launch {
                         isRegistering = true
                         registerError = null

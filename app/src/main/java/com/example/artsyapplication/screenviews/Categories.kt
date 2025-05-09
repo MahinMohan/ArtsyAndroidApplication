@@ -1,8 +1,10 @@
 package com.example.artsyapplication.screenviews
+import androidx.compose.foundation.isSystemInDarkTheme
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -41,6 +43,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.withStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
 
 data class GenesResponse(
     @SerializedName("_embedded") val embedded: EmbeddedGenes
@@ -235,10 +238,13 @@ fun Categories(
 
 @Composable
 fun RedirectHyperLinkCateg(description: String) {
+    val isDark = isSystemInDarkTheme()
+    val descriptionColor = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
     val linkColor = MaterialTheme.colorScheme.primary
     val linkRegex = remember { """\[(.*?)\]\((.*?)\)""".toRegex() }
 
-    val AnnotedString = remember(description, linkColor) {
+    // Build the annotated string as before
+    val annotatedString = remember(description, linkColor) {
         buildAnnotatedString {
             var curr = 0
             for (m in linkRegex.findAll(description)) {
@@ -250,8 +256,8 @@ fun RedirectHyperLinkCateg(description: String) {
                 pushStringAnnotation(tag = "URL", annotation = url)
                 withStyle(
                     SpanStyle(
-                        color           = linkColor,
-                        textDecoration  = TextDecoration.Underline
+                        color          = linkColor,
+                        textDecoration = TextDecoration.Underline
                     )
                 ) {
                     append(label)
@@ -260,16 +266,17 @@ fun RedirectHyperLinkCateg(description: String) {
 
                 curr = m.range.last + 1
             }
-
             append(description.substring(curr))
         }
     }
-    val handler   = LocalUriHandler.current
+
+    val handler = LocalUriHandler.current
     ClickableText(
-        text  = AnnotedString,
-        style = MaterialTheme.typography.bodyMedium,
+        text  = annotatedString,
+        style = MaterialTheme.typography.bodyMedium
+            .copy(color = descriptionColor),
         onClick = { offset ->
-            AnnotedString
+            annotatedString
                 .getStringAnnotations("URL", offset, offset)
                 .firstOrNull()
                 ?.let { handler.openUri(it.item) }
