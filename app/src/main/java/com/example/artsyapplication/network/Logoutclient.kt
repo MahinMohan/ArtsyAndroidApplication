@@ -14,7 +14,7 @@ interface LogoutApiService {
 object LogoutClient {
     val api: LogoutApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/")
+            .baseUrl("https://mahinartsyappassignment3.wl.r.appspot.com/")
             .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

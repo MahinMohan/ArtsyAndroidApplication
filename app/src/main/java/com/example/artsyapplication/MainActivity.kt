@@ -53,7 +53,7 @@ interface MeApiService {
 private object MeClient {
     val api: MeApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/")
+            .baseUrl("https://mahinartsyappassignment3.wl.r.appspot.com/")
             .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -82,7 +82,7 @@ fun AppRouter() {
     var currentUser by remember { mutableStateOf<LoggedInUser?>(null) }
     var meChecked   by remember { mutableStateOf(false) }
 
-    // Initial session restore
+
     LaunchedEffect(Unit) {
         try {
             val resp = MeClient.api.me()
@@ -121,11 +121,11 @@ fun AppRouter() {
         }
     }
 
-    // Don’t render routes until we know session state
+
     if (!meChecked) return
 
     NavHost(navController = navController, startDestination = "home") {
-        // Home route stays unchanged
+
         composable("home") {
             HomeScreen(
                 user             = currentUser,
@@ -161,7 +161,7 @@ fun AppRouter() {
             )
         }
 
-        // Login: Option A → no /api/me, just use userFromLogin
+
         composable("login") {
             LoginScreen(
                 onLoginSuccess = { userFromLogin ->
@@ -174,7 +174,7 @@ fun AppRouter() {
             )
         }
 
-        // Register: Option A → no /api/me, just use userFromRegister
+
         composable("register") {
             RegisterScreen(
                 onRegisterSuccess = { userFromRegister ->
@@ -189,7 +189,7 @@ fun AppRouter() {
             )
         }
 
-        // Artist details route unchanged
+
         composable("artistDetails/{artistId}/{artistName}") { backStackEntry ->
             val artistId   = backStackEntry.arguments?.getString("artistId")   ?: ""
             val artistName = backStackEntry.arguments?.getString("artistName") ?: ""

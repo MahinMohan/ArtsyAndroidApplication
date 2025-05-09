@@ -29,7 +29,7 @@ interface FavouritesApiService {
 object FavouritesClient {
     val api: FavouritesApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/")
+            .baseUrl("https://mahinartsyappassignment3.wl.r.appspot.com/")
             .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -52,7 +52,7 @@ interface DeleteFavouritesApiService {
 object DeleteFavouritesClient {
     val api: DeleteFavouritesApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/")
+            .baseUrl("https://mahinartsyappassignment3.wl.r.appspot.com/")
             .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

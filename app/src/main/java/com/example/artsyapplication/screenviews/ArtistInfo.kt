@@ -35,7 +35,7 @@ interface ArtistApi {
 }
 
 object ArtistApiClient {
-    private const val BASE_URL = "http://10.0.2.2:3000/"
+    private const val BASE_URL = "https://mahinartsyappassignment3.wl.r.appspot.com/"
     val instance: ArtistApi by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -57,7 +57,11 @@ fun ArtistInfo(artistId: String) {
             if (response.isSuccessful) {
                 artist = response.body()
             }
-        } finally {
+        }
+        catch(e: Exception){
+
+        }
+        finally {
             isLoading = false
         }
     }
@@ -105,7 +109,7 @@ fun ArtistInfo(artistId: String) {
                                 && it.birthday.isNotBlank()
                                 && it.deathday.isNotBlank()
                             ) {
-                                // 1) no nationality, but both years → "birthday - deathday"
+
                                 "${it.birthday} - ${it.deathday}"
                             } else if (
                                 it.birthday.isBlank()
@@ -119,10 +123,10 @@ fun ArtistInfo(artistId: String) {
                                 && it.birthday.isBlank()
                                 && it.deathday.isBlank()
                             ) {
-                                // 3) nothing present → empty
+
                                 ""
                             } else {
-                                // 4) all three present → "nationality, birthday - deathday"
+
                                 "${it.nationality}, ${it.birthday} - ${it.deathday}"
                             },
                         color = if (isDarkTheme) Color.White else Color.Black,

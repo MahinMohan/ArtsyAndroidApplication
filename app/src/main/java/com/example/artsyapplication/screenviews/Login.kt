@@ -35,6 +35,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
+import androidx.compose.ui.focus.FocusDirection
 
 data class LoginRequest(val email: String, val password: String)
 
@@ -46,7 +47,7 @@ interface LoginApiService {
 object LoginClient {
     val api: LoginApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/")
+            .baseUrl("https://mahinartsyappassignment3.wl.r.appspot.com/")
             .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -136,7 +137,7 @@ fun LoginScreen(
                     },
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 )
             )
             emailError?.let {
@@ -252,7 +253,7 @@ fun LoginScreen(
                         isLoggingIn = false
                     }
                 },
-//                enabled  = !isLoggingIn && formValid,
+
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isLoggingIn) Color(0xFF86868B)

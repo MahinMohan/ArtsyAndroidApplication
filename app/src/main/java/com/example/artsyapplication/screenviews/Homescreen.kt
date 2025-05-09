@@ -50,7 +50,7 @@ fun HomeScreen(
 
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope             = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var searchText  by rememberSaveable { mutableStateOf("") }

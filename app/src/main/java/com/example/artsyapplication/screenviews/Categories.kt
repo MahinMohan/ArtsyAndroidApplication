@@ -70,7 +70,7 @@ private interface GenesApiService {
 }
 private val genesService: GenesApiService by lazy {
     Retrofit.Builder()
-        .baseUrl("http://10.0.2.2:3000/")
+        .baseUrl("https://mahinartsyappassignment3.wl.r.appspot.com/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(GenesApiService::class.java)
@@ -243,7 +243,7 @@ fun RedirectHyperLinkCateg(description: String) {
     val linkColor = MaterialTheme.colorScheme.primary
     val linkRegex = remember { """\[(.*?)\]\((.*?)\)""".toRegex() }
 
-    // Build the annotated string as before
+
     val annotatedString = remember(description, linkColor) {
         buildAnnotatedString {
             var curr = 0

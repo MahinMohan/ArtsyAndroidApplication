@@ -150,7 +150,6 @@ fun ArtistDetailsScreen(
             }
         }
 
-
         SnackbarHost(
             hostState = snackbarHostState,
             modifier  = Modifier

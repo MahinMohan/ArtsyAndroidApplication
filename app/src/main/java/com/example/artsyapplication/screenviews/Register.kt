@@ -46,7 +46,7 @@ interface RegisterApiService {
 object RegisterClient {
     val api: RegisterApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3000/")
+            .baseUrl("https://mahinartsyappassignment3.wl.r.appspot.com/")
             .client(Network.client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -166,14 +166,12 @@ fun RegisterScreen(
                             emailTouched = true
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-//                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-//                                    "Invalid format"
+
                                 else -> null}
                         } else if (emailTouched) {
                             emailError = when {
                                 email.isBlank() -> "Email cannot be empty"
-//                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-//                                    "Invalid format"
+
                                 else -> null
                             }
                         }
@@ -294,7 +292,7 @@ fun RegisterScreen(
                         isRegistering = false
                     }
                 },
-//                enabled  = !isRegistering && formValid,
+
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isRegistering) Color(0xFF86868B)

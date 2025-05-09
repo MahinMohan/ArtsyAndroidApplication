@@ -74,7 +74,7 @@ interface SimilarApiService {
 }
 
 object SimilarRetrofitClient {
-    private const val BASE_URL = "http://10.0.2.2:3000/"
+    private const val BASE_URL = "https://mahinartsyappassignment3.wl.r.appspot.com/"
     val instance: SimilarApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
