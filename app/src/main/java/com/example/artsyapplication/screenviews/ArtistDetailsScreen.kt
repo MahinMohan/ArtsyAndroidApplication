@@ -48,19 +48,20 @@ fun ArtistDetailsScreen(
     onFavoriteRemoved  : (String) -> Unit
 ) {
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbar = remember { SnackbarHostState() }
 
 
-    val isDarkTheme = isSystemInDarkTheme()
-    val topBarColor = if (isDarkTheme) Color(0xFF223D6B) else Color(0xFFbfcdf2)
+    val SystemDarkCheck = isSystemInDarkTheme()
+    val topBarColor = if (SystemDarkCheck) Color(0xFF223D6B) else Color(0xFFbfcdf2)
 
-    var selectedTabIndex by remember { mutableStateOf(0) }
+
     val coroutineScope   = rememberCoroutineScope()
+    var TabChoice by remember { mutableStateOf(0) }
 
-    val baseTabs  = listOf("Details", "Artworks")
-    val baseIcons = listOf(Icons.Outlined.Info, Icons.Outlined.AccountBox)
-    val tabs  = if (user != null) baseTabs + "Similar" else baseTabs
-    val icons = if (user != null) baseIcons + Icons.Filled.PersonSearch else baseIcons
+    val Tabs  = listOf("Details", "Artworks")
+    val TabIcons = listOf(Icons.Outlined.Info, Icons.Outlined.AccountBox)
+    val tabs  = if (user != null) Tabs + "Similar" else Tabs
+    val icons = if (user != null) TabIcons + Icons.Filled.PersonSearch else TabIcons
 
     val tabBar = @Composable {
         TopAppBar(
@@ -81,7 +82,7 @@ fun ArtistDetailsScreen(
                                         .api
                                         .deleteFavourite(DeleteFavouriteRequest(id = artistId))
                                     onFavoriteRemoved(artistId)
-                                    snackbarHostState.showSnackbar("Removed from Favourites")
+                                    snackbar.showSnackbar("Removed from Favourites")
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }
@@ -108,7 +109,7 @@ fun ArtistDetailsScreen(
                                         addedAt     = Instant.now().toString()
                                     )
                                 )
-                                snackbarHostState.showSnackbar("Added to Favourites")
+                                snackbar.showSnackbar("Added to Favourites")
                             }
                         }
                     }) {
@@ -127,17 +128,17 @@ fun ArtistDetailsScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             tabBar()
-            TabRow(selectedTabIndex = selectedTabIndex) {
+            TabRow(selectedTabIndex = TabChoice) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
-                        selected = selectedTabIndex == index,
-                        onClick  = { selectedTabIndex = index },
+                        selected = TabChoice == index,
+                        onClick  = { TabChoice = index },
                         icon     = { Icon(icons[index], contentDescription = title) },
                         text     = { Text(title) }
                     )
                 }
             }
-            when (selectedTabIndex) {
+            when (TabChoice) {
                 0 -> ArtistInfo(artistId)
                 1 -> Artworks(artistId)
                 2 -> if (user != null) Similarartists(
@@ -151,7 +152,7 @@ fun ArtistDetailsScreen(
         }
 
         SnackbarHost(
-            hostState = snackbarHostState,
+            hostState = snackbar,
             modifier  = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)

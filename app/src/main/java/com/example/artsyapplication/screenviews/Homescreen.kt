@@ -44,24 +44,24 @@ fun HomeScreen(
     onFavoriteRemoved: (String) -> Unit
 ) {
     val topBarBlue     = Color(0xFFbfcdf2)
-    val isDarkTheme    = isSystemInDarkTheme()
-    val topBarColor    = if (isDarkTheme) Color(0xFF223D6B) else topBarBlue
-    val titleTextColor = if (isDarkTheme) Color.White else Color.Black
+    val SystemDarkCheck    = isSystemInDarkTheme()
+    val topBarColor    = if (SystemDarkCheck) Color(0xFF223D6B) else topBarBlue
+    val titleTextColor = if (SystemDarkCheck) Color.White else Color.Black
 
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     var isSearching by rememberSaveable { mutableStateOf(false) }
-    var searchText  by rememberSaveable { mutableStateOf("") }
+    var artistsearch  by rememberSaveable { mutableStateOf("") }
 
     if (isSearching) {
         SearchArtistsScreen(
-            searchText         = searchText,
-            onSearchTextChange = { searchText = it },
+            artistsearch         = artistsearch,
+            onSearchTextChange = { artistsearch = it },
             onCancelSearch     = {
                 isSearching = false
-                searchText  = ""
+                artistsearch  = ""
             },
             onArtistSelected   = onArtistSelected,
             user               = user,
@@ -106,7 +106,7 @@ fun HomeScreen(
                                             onLogout()
                                             menuExpanded = false
                                             scope.launch {
-                                                snackbarHostState.showSnackbar("Logged out successfully")
+                                                snackbar.showSnackbar("Logged out successfully")
                                             }
                                         }
                                     )
@@ -116,7 +116,7 @@ fun HomeScreen(
                                             onDeleteAccount()
                                             menuExpanded = false
                                             scope.launch {
-                                                snackbarHostState.showSnackbar("Deleted user successfully")
+                                                snackbar.showSnackbar("Deleted user successfully")
                                             }
                                         }
                                     )
@@ -126,7 +126,7 @@ fun HomeScreen(
                     }
                 )
             },
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+            snackbarHost = { SnackbarHost(hostState = snackbar) }
         ) { innerPadding ->
             val uriHandler  = LocalUriHandler.current
             val currentDate = remember {
@@ -185,7 +185,7 @@ fun HomeScreen(
                     Button(
                         onClick        = onLogin,
                         shape          = RoundedCornerShape(24.dp),
-                        colors         = if (isDarkTheme)
+                        colors         = if (SystemDarkCheck)
                             ButtonDefaults.buttonColors(containerColor = Color(0xFF223D6B))
                         else
                             ButtonDefaults.buttonColors(),
@@ -193,7 +193,7 @@ fun HomeScreen(
                     ) {
                         Text(
                             "Log in to see favorites",
-                            color = if (isDarkTheme) Color.White else Color.Unspecified
+                            color = if (SystemDarkCheck) Color.White else Color.Unspecified
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))

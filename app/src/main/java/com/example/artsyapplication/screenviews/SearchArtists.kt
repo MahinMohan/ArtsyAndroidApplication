@@ -93,7 +93,7 @@ object RetrofitClient {
 
 @Composable
 fun SearchArtistsScreen(
-    searchText         : String,
+    artistsearch         : String,
     onSearchTextChange : (String) -> Unit,
     onCancelSearch     : () -> Unit,
     onArtistSelected   : (String, String) -> Unit,
@@ -116,11 +116,11 @@ fun SearchArtistsScreen(
     val focusManager      = LocalFocusManager.current
     val keyboardController= LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(searchText) {
-        if (searchText.length >= 3) {
+    LaunchedEffect(artistsearch) {
+        if (artistsearch.length >= 3) {
             isLoading.value = true
             searchResults.value = try {
-                val resp = RetrofitClient.instance.searchArtists(searchText)
+                val resp = RetrofitClient.instance.searchArtists(artistsearch)
                 if (resp.isSuccessful) resp.body()!! else emptyList()
             } catch (_: Exception) {
                 emptyList()
@@ -143,7 +143,7 @@ fun SearchArtistsScreen(
                     val focusRequester = remember { FocusRequester() }
                     LaunchedEffect(Unit) { focusRequester.requestFocus() }
                     TextField(
-                        value               = searchText,
+                        value               = artistsearch,
                         onValueChange       = onSearchTextChange,
                         placeholder         = { Text("Search artists...", color = placeholderColor, fontSize = 22.sp) },
                         singleLine          = true,
@@ -205,7 +205,7 @@ fun SearchArtistsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Loading..")
                 }
-            } else if (hasSearched.value && !isLoading.value && searchText.length >= 3 && searchResults.value.isEmpty()) {
+            } else if (hasSearched.value && !isLoading.value && artistsearch.length >= 3 && searchResults.value.isEmpty()) {
                 Column(
                     modifier            = Modifier
                         .fillMaxWidth().padding(vertical = 16.dp, horizontal = 16.dp),
