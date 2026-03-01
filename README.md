@@ -1,4 +1,4 @@
-## Artsy-Mobile-Insight
+## Artist Search Mobile Application
 
 # Demonstration
 
